@@ -450,7 +450,7 @@ class TestAgentMeterConfig(unittest.TestCase):
             project_id="proj_123",
             agent_id="agent_456",
             user_id="user_789",
-            base_url="https://api.agentmeter.com",
+            base_url="https://api.staging.agentmeter.money",
             timeout=30,
             retry_attempts=3,
             batch_size=100
@@ -460,7 +460,7 @@ class TestAgentMeterConfig(unittest.TestCase):
         self.assertEqual(config.project_id, "proj_123")
         self.assertEqual(config.agent_id, "agent_456")
         self.assertEqual(config.user_id, "user_789")
-        self.assertEqual(config.base_url, "https://api.agentmeter.com")
+        self.assertEqual(config.base_url, "https://api.staging.agentmeter.money")
         self.assertEqual(config.timeout, 30)
         self.assertEqual(config.retry_attempts, 3)
         self.assertEqual(config.batch_size, 100)

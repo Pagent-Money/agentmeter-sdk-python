@@ -54,7 +54,7 @@ await tracker.track_instant_payment(user_id="user123", amount=5.99)
 ## Installation
 
 ```bash
-pip install agentmeter-sdk
+pip install agentmeter
 ```
 
 ## Quick Start
@@ -380,7 +380,7 @@ pytest tests/
 
 For questions, issues, or support:
 
-- [GitHub Issues](https://github.com/agentmeter/agentmeter-sdk-python/issues)
+- [GitHub Issues](https://github.com/Pagent-Money/agentmeter-sdk-python/issues)
 - [Support](mailto:thomas.yu@knn3.xyz)
 - [Website](https://agentmeter.money)
 

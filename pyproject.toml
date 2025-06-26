@@ -3,19 +3,19 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agentmeter-sdk"
+name = "agentmeter"
 version = "0.2.0"
 authors = [
     {name = "AgentMeter Team", email = "thomas.yu@knn3.xyz"},
 ]
 description = "Python SDK for AgentMeter usage tracking and billing"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.7"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
@@ -65,9 +65,9 @@ docs = [
 [project.urls]
 Homepage = "https://agentmeter.money"
 Documentation = "https://docs.agentmeter.money/sdk/python"
-Repository = "https://github.com/agentmeter/agentmeter-sdk-python"
-Issues = "https://github.com/agentmeter/agentmeter-sdk-python/issues"
-Changelog = "https://github.com/agentmeter/agentmeter-sdk-python/blob/main/CHANGELOG.md"
+Repository = "https://github.com/Pagent-Money/agentmeter-sdk-python"
+Issues = "https://github.com/Pagent-Money/agentmeter-sdk-python/issues"
+Changelog = "https://github.com/Pagent-Money/agentmeter-sdk-python/blob/main/CHANGELOG.md"
 
 [project.scripts]
 agentmeter = "agentmeter.cli:main"

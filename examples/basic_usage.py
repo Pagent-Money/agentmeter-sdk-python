@@ -1,11 +1,18 @@
+#!/usr/bin/env python3
 """
-AgentMeter SDK Basic Usage Examples
-支持三种付费模式的基本使用示例
+Basic usage examples for the AgentMeter SDK supporting three payment types
 
-This example demonstrates how to use the AgentMeter SDK with different payment types:
-1. API Request Pay (按API次数付费) - Charge based on number of API calls
-2. Token-based Pay (按Token付费) - Charge based on input/output tokens
-3. Instant Pay (即时付费) - Charge arbitrary amounts immediately
+This example demonstrates:
+1. API Request Pay - Charge based on number of API calls
+2. Token-based Pay - Charge based on input/output tokens
+3. Instant Pay - Charge arbitrary amounts immediately
+
+Usage:
+    python basic_usage.py
+
+Requirements:
+    - AgentMeter API credentials configured
+    - Python 3.7+
 """
 
 import os
@@ -47,16 +54,16 @@ def main():
     print("📊 Payment Type Examples")
     print("=" * 50)
     
-    # Example 1: API Request Pay (按API次数付费)
-    print("\n1️⃣ API Request Pay Examples")
+    # Example 1: API Request Pay
+    print("\n=== API Request Pay Example ===")
     api_request_pay_examples(client)
     
-    # Example 2: Token-based Pay (按Token付费)
-    print("\n2️⃣ Token-based Pay Examples")
+    # Example 2: Token-based Pay  
+    print("\n=== Token-based Pay Example ===")
     token_based_pay_examples(client)
     
-    # Example 3: Instant Pay (即时付费)
-    print("\n3️⃣ Instant Pay Examples")
+    # Example 3: Instant Pay
+    print("\n=== Instant Pay Example ===")
     instant_pay_examples(client)
     
     # Example 4: User Meter Management
@@ -69,7 +76,7 @@ def main():
 
 
 def api_request_pay_examples(client: AgentMeterClient):
-    """Examples for API request payment (按API次数付费)"""
+    """Examples for API request payment"""
     print("API Request Pay - Charge $0.3 per API call")
     
     # Method 1: Direct client call
@@ -117,7 +124,7 @@ def api_request_pay_examples(client: AgentMeterClient):
 
 
 def token_based_pay_examples(client: AgentMeterClient):
-    """Examples for token-based payment (按Token付费)"""
+    """Examples for token-based payment"""
     print("Token-based Pay - Charge $0.004/input token, $0.0001/output token")
     
     # Method 1: Direct client call
@@ -188,7 +195,7 @@ def token_based_pay_examples(client: AgentMeterClient):
 
 
 def instant_pay_examples(client: AgentMeterClient):
-    """Examples for instant payment (即时付费)"""
+    """Examples for instant payment"""
     print("Instant Pay - Charge $4.99 for premium features")
     
     # Method 1: Direct client call

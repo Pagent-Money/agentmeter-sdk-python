@@ -1,22 +1,24 @@
- [build-system]
+[build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentmeter-sdk"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
-    {name = "AgentMeter Team", email = "support@agentmeter.com"},
+    {name = "AgentMeter Team", email = "thomas.yu@knn3.xyz"},
 ]
-description = "Python SDK for AgentMeter - Track and meter agent API usage and token consumption"
+description = "Python SDK for AgentMeter usage tracking and billing"
 readme = "README.md"
-license = "MIT"
-requires-python = ">=3.8"
+license = {text = "MIT"}
+requires-python = ">=3.7"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -24,31 +26,35 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Typing :: Typed",
+    "Topic :: Office/Business :: Financial :: Accounting",
 ]
-keywords = ["agentmeter", "ai", "tracking", "monitoring", "langchain", "agents", "llm"]
+keywords = [
+    "billing",
+    "usage-tracking", 
+    "metering",
+    "api-billing",
+    "token-billing",
+    "subscription",
+    "payments",
+    "agentmeter"
+]
 dependencies = [
-    "requests>=2.25.0",
-    "pydantic>=1.8.0",
-    "typing-extensions>=4.0.0",
+    "httpx>=0.24.0",
+    "pydantic>=2.0.0",
+    "typing-extensions>=4.5.0; python_version<'3.8'",
 ]
 
 [project.optional-dependencies]
-langchain = [
-    "langchain>=0.1.0",
-    "langchain-core>=0.1.0",
-]
+langchain = ["langchain-core>=0.1.0"]
 dev = [
-    "pytest>=6.0",
+    "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
-    "pytest-mock>=3.0.0",
-    "requests-mock>=1.9.0",
-    "black>=22.0",
-    "flake8>=4.0",
-    "mypy>=0.991",
-    "isort>=5.0",
-    "pre-commit>=2.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
 ]
 docs = [
     "sphinx>=4.0",
@@ -57,10 +63,10 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://agentmeter.com"
-Documentation = "https://docs.agentmeter.com/sdk/python"
+Homepage = "https://agentmeter.money"
+Documentation = "https://docs.agentmeter.money/sdk/python"
 Repository = "https://github.com/agentmeter/agentmeter-sdk-python"
-"Bug Tracker" = "https://github.com/agentmeter/agentmeter-sdk-python/issues"
+Issues = "https://github.com/agentmeter/agentmeter-sdk-python/issues"
 Changelog = "https://github.com/agentmeter/agentmeter-sdk-python/blob/main/CHANGELOG.md"
 
 [project.scripts]

@@ -1,47 +1,63 @@
 # AgentMeter Python SDK
 
-A comprehensive Python SDK for integrating AgentMeter usage tracking and billing into your applications. **支持三种付费模式：API请求付费、Token付费、即时付费。**
+A comprehensive Python SDK for integrating AgentMeter usage tracking and billing into your applications. **Supports three payment types: API Request Pay, Token-based Pay, and Instant Pay.**
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://pypi.org/project/agentmeter-sdk/)
-[![Python](https://img.shields.io/badge/python-3.7+-green.svg)](https://python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+## Table of Contents
 
-## 🚀 Features
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Payment Types](#payment-types)
+- [API Reference](#api-reference)
+- [Examples](#examples)
+- [Configuration](#configuration)
+- [Error Handling](#error-handling)
+- [Testing](#testing)
+- [Support](#support)
 
-- **Three Payment Models** - Support for different billing scenarios
-- **Easy Integration** - Simple decorators and context managers
-- **Automatic Tracking** - Built-in usage measurement
-- **User Meter Management** - Subscription limits and monitoring
-- **Comprehensive API** - Full access to AgentMeter platform features
-- **Error Handling** - Robust error handling and retry logic
+## Features
 
-## 💰 Payment Types
+✅ **Three Payment Models**: API requests, token-based, and instant payments  
+✅ **Thread-Safe**: Safe for concurrent usage tracking  
+✅ **Context Managers**: Clean resource management with automatic cleanup  
+✅ **Decorators**: Easy function-level usage tracking  
+✅ **LangChain Integration**: Built-in support for LangChain applications  
+✅ **Comprehensive Error Handling**: Robust error handling and retry logic  
+✅ **Type Safety**: Full type hints and Pydantic models  
 
-### 1. API Request Pay (按API次数付费)
-Charge based on the number of API calls made.
-- **Use Case**: API services, function calls, request-based features
-- **Formula**: `# of API requests × unit price`
-- **Example**: `1 × $0.3 = $0.3` per API call
+## Payment Types
 
-### 2. Token-based Pay (按Token付费)
-Charge based on input/output token consumption from AI models.
-- **Use Case**: LLM calls, AI processing, content generation
-- **Formula**: `(input tokens × input price) + (output tokens × output price)`
-- **Example**: `1000 × $0.004 + 500 × $0.0001 = $4.05`
+### 1. API Request Pay
+Charge customers based on the number of API calls they make.
 
-### 3. Instant Pay (即时付费)
-Charge arbitrary amounts immediately for premium features.
-- **Use Case**: Premium features, one-time payments, upgrades
-- **Formula**: `1 × price`
-- **Example**: `1 × $4.99 = $4.99` for premium feature
+```python
+# Track API calls
+await tracker.track_api_request(user_id="user123", api_calls=1)
+```
 
-## 📦 Installation
+### 2. Token-based Pay
+Charge customers based on input and output tokens consumed by AI models.
+
+```python
+# Track token usage
+await tracker.track_token_usage(user_id="user123", tokens_in=100, tokens_out=50)
+```
+
+### 3. Instant Pay
+Charge customers arbitrary amounts immediately for any service.
+
+```python
+# Instant payment
+await tracker.track_instant_payment(user_id="user123", amount=5.99)
+```
+
+## Installation
 
 ```bash
 pip install agentmeter-sdk
 ```
 
-## 🔧 Quick Start
+## Quick Start
 
 ### Basic Setup
 
@@ -153,7 +169,30 @@ with track_instant_pay(client, project_id, agent_id) as usage:
     usage["metadata"]["feature"] = "ai_analysis"
 ```
 
-## 🎯 Advanced Features
+## API Reference
+
+### Core Classes
+- `AgentMeterClient` - Main client for API interactions
+- `AgentMeterTracker` - Batch tracking with auto-flush
+- `AgentMeterConfig` - Configuration management
+
+### Payment Models
+- `APIRequestPayEvent` - API request payment events
+- `TokenBasedPayEvent` - Token-based payment events  
+- `InstantPayEvent` - Instant payment events
+
+### Decorators
+- `@meter_api_request_pay` - API request payment decorator
+- `@meter_token_based_pay` - Token-based payment decorator
+- `@meter_instant_pay` - Instant payment decorator
+- `@meter_agent` - Class-level metering decorator
+
+### Context Managers
+- `track_api_request_pay()` - API request payment tracking
+- `track_token_based_pay()` - Token-based payment tracking
+- `track_instant_pay()` - Instant payment tracking
+
+## Examples
 
 ### User Meter Management
 
@@ -220,7 +259,7 @@ tracker.track_instant_pay(amount=2.99, description="Feature unlock")
 tracker.flush()
 ```
 
-## 🛒 E-commerce Integration Example
+### E-commerce Integration Example
 
 ```python
 class EcommerceService:
@@ -243,7 +282,7 @@ class EcommerceService:
         return provide_premium_support(issue)
 ```
 
-## 🎨 Class-level Metering
+### Class-level Metering
 
 ```python
 from agentmeter import meter_agent, PaymentType
@@ -268,7 +307,7 @@ class SearchAgent:
         pass
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -298,7 +337,7 @@ config = AgentMeterConfig(
 client = AgentMeterClient(**config.dict())
 ```
 
-## 📊 Error Handling
+## Error Handling
 
 ```python
 from agentmeter import AgentMeterError, AgentMeterAPIError
@@ -316,97 +355,7 @@ except AgentMeterError as e:
     print(f"SDK error: {e}")
 ```
 
-## 🔌 Integration Examples
-
-### FastAPI Integration
-
-```python
-from fastapi import FastAPI
-from agentmeter import meter_api_request_pay
-
-app = FastAPI()
-client = create_client(...)
-
-@app.get("/search")
-@meter_api_request_pay(client, unit_price=0.1)
-async def search_endpoint(query: str, user_id: str):
-    return {"results": perform_search(query)}
-```
-
-### Flask Integration
-
-```python
-from flask import Flask
-from agentmeter import track_api_request_pay
-
-app = Flask(__name__)
-client = create_client(...)
-
-@app.route('/api/recommend/<user_id>')
-def recommend(user_id):
-    with track_api_request_pay(client, project_id, agent_id, unit_price=0.2) as usage:
-        recommendations = get_recommendations(user_id)
-        usage["metadata"]["recommendation_count"] = len(recommendations)
-        return {"recommendations": recommendations}
-```
-
-### LangChain Integration
-
-```python
-from agentmeter import LangChainAgentMeterCallback
-
-callback = LangChainAgentMeterCallback(
-    client=client,
-    project_id="proj_123",
-    agent_id="langchain_agent"
-)
-
-# Use with LangChain
-llm = OpenAI(callbacks=[callback])
-result = llm("What is machine learning?")
-```
-
-## 📈 Best Practices
-
-### 1. Choose the Right Payment Model
-- **API Request Pay**: For well-defined API endpoints
-- **Token-based Pay**: For AI/ML services with variable token usage  
-- **Instant Pay**: For premium features and one-time charges
-
-### 2. Use Appropriate Tracking Methods
-- **Decorators**: For function-level tracking
-- **Context Managers**: For code block tracking
-- **Direct Calls**: For explicit control
-- **Batch Tracking**: For high-volume scenarios
-
-### 3. Handle Errors Gracefully
-```python
-try:
-    with track_api_request_pay(client, project_id, agent_id) as usage:
-        result = your_api_call()
-        usage["metadata"]["success"] = True
-        return result
-except Exception as e:
-    # AgentMeter tracking won't interfere with your app
-    print(f"API call failed: {e}")
-    raise
-```
-
-### 4. Monitor Usage Limits
-```python
-def check_user_limit(user_id):
-    meter = client.get_user_meter(user_id=user_id)
-    usage_percent = (meter.current_usage / meter.threshold_amount) * 100
-    
-    if usage_percent > 90:
-        return {"status": "limit_exceeded", "message": "Usage limit reached"}
-    elif usage_percent > 75:
-        return {"status": "warning", "message": "Approaching limit"}
-    else:
-        return {"status": "ok", "remaining": meter.threshold_amount - meter.current_usage}
-```
-
-## 🧪 Testing
+## Testing
 
 Run the example scripts:
 
@@ -427,55 +376,19 @@ Run tests:
 pytest tests/
 ```
 
-## 📚 API Reference
+## Support
 
-### Core Classes
-- `AgentMeterClient` - Main client for API interactions
-- `AgentMeterTracker` - Batch tracking with auto-flush
-- `AgentMeterConfig` - Configuration management
+For questions, issues, or support:
 
-### Payment Models
-- `APIRequestPayEvent` - API request payment events
-- `TokenBasedPayEvent` - Token-based payment events  
-- `InstantPayEvent` - Instant payment events
+- [GitHub Issues](https://github.com/agentmeter/agentmeter-sdk-python/issues)
+- [Support](mailto:thomas.yu@knn3.xyz)
+- [Website](https://agentmeter.money)
 
-### Decorators
-- `@meter_api_request_pay` - API request payment decorator
-- `@meter_token_based_pay` - Token-based payment decorator
-- `@meter_instant_pay` - Instant payment decorator
-- `@meter_agent` - Class-level metering decorator
+## Contact
 
-### Context Managers
-- `track_api_request_pay()` - API request payment tracking
-- `track_token_based_pay()` - Token-based payment tracking
-- `track_instant_pay()` - Instant payment tracking
+- 🌐 Website: https://agentmeter.money
+- 📧 Email: thomas.yu@knn3.xyz
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 Links
-
-- [AgentMeter Platform](https://agentmeter.money)
-- [API Documentation](https://docs.agentmeter.money)
-- [Support](mailto:support@agentmeter.com)
-- [Status Page](https://status.agentmeter.com)
-
-## 🆘 Support
-
-For support or questions:
-- 📧 Email: support@agentmeter.com
-- 💬 Discord: [Join our community](https://discord.gg/agentmeter)
-- 📖 Documentation: [docs.agentmeter.money](https://docs.agentmeter.money)
-
----
-
-Made with ❤️ by the AgentMeter team

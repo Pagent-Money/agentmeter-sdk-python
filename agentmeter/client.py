@@ -135,16 +135,16 @@ class AgentMeterClient:
         response_data = self._request('POST', '/api/meter/event', data=event_data)
         return MeterEventResponse(**response_data)
     
-    def record_api_request_pay(
+    async def record_api_request_pay(
         self,
-        api_calls: int = 1,
-        unit_price: Optional[float] = None,
         project_id: Optional[str] = None,
         agent_id: Optional[str] = None,
         user_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        api_calls: int = 1,
+        unit_price: Optional[float] = None,
+        metadata: Optional[Dict] = None
     ) -> MeterEventResponse:
-        """Record an API request payment event (按API次数付费)"""
+        """Record an API request payment event"""
         event = APIRequestPayEvent(
             project_id=project_id or self.project_id,
             agent_id=agent_id or self.agent_id,
@@ -155,18 +155,18 @@ class AgentMeterClient:
         )
         return self.record_event(event)
     
-    def record_token_based_pay(
+    async def record_token_based_pay(
         self,
-        tokens_in: int,
-        tokens_out: int,
-        input_token_price: Optional[float] = None,
-        output_token_price: Optional[float] = None,
         project_id: Optional[str] = None,
         agent_id: Optional[str] = None,
         user_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        tokens_in: Optional[int] = None,
+        tokens_out: Optional[int] = None,
+        input_token_price: Optional[float] = None,
+        output_token_price: Optional[float] = None,
+        metadata: Optional[Dict] = None
     ) -> MeterEventResponse:
-        """Record a token-based payment event (按Token付费)"""
+        """Record a token-based payment event"""
         event = TokenBasedPayEvent(
             project_id=project_id or self.project_id,
             agent_id=agent_id or self.agent_id,
@@ -179,16 +179,16 @@ class AgentMeterClient:
         )
         return self.record_event(event)
     
-    def record_instant_pay(
+    async def record_instant_pay(
         self,
-        amount: float,
-        description: Optional[str] = None,
         project_id: Optional[str] = None,
         agent_id: Optional[str] = None,
         user_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        amount: float = 0.0,
+        description: Optional[str] = None,
+        metadata: Optional[Dict] = None
     ) -> MeterEventResponse:
-        """Record an instant payment event (即时付费)"""
+        """Record an instant payment event"""
         event = InstantPayEvent(
             project_id=project_id or self.project_id,
             agent_id=agent_id or self.agent_id,

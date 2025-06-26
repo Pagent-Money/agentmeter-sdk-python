@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AgentMeter SDK Search Agent Demo
-搜索代理演示
+Search agent demonstration
 
 A comprehensive demo showing how to build a search agent with AgentMeter integration
 using all three payment types: API requests, token-based, and instant payments.
@@ -113,8 +113,7 @@ class SmartSearchAgent:
     
     def basic_search(self, query: str, user_id: str, config: SearchConfig = None) -> List[SearchResult]:
         """
-        Basic search functionality - charged per API request
-        基础搜索功能 - 按API请求次数收费
+        Basic search functionality - Charged per API request count
         """
         if config is None:
             config = SearchConfig()
@@ -163,8 +162,7 @@ class SmartSearchAgent:
     )
     def ai_enhance_results(self, query: str, results: List[SearchResult], user_id: str) -> List[SearchResult]:
         """
-        AI-enhanced result processing - charged by token usage
-        AI增强结果处理 - 按Token使用量收费
+        AI-enhanced result processing - Charged based on token usage
         """
         # Inject client for decorator
         SmartSearchAgent.ai_enhance_results.__wrapped__.__globals__['client'] = self.client
@@ -203,13 +201,12 @@ class SmartSearchAgent:
     @meter_instant_pay(
         client=None,  # Will be injected
         amount=2.99,
-        description="Semantic Search Premium Feature",
+        description="Advanced semantic search",
         condition_func=lambda self, *args, **kwargs: self.should_charge_premium(*args, **kwargs)
     )
     def semantic_search(self, query: str, user_id: str, config: SearchConfig) -> List[SearchResult]:
         """
-        Semantic search with premium features - instant payment
-        语义搜索高级功能 - 即时付费
+        Advanced semantic search feature - Instant payment
         """
         # Inject client for decorator
         SmartSearchAgent.semantic_search.__wrapped__.__globals__['client'] = self.client
@@ -255,7 +252,6 @@ class SmartSearchAgent:
     def advanced_search(self, query: str, user_id: str, config: SearchConfig = None) -> Dict[str, Any]:
         """
         Advanced search combining multiple techniques
-        高级搜索结合多种技术
         """
         if config is None:
             config = SearchConfig()
@@ -309,7 +305,6 @@ class SmartSearchAgent:
     def batch_search(self, queries: List[str], user_id: str, config: SearchConfig = None) -> Dict[str, Any]:
         """
         Batch search processing with aggregated billing
-        批量搜索处理和聚合计费
         """
         if config is None:
             config = SearchConfig()

@@ -34,13 +34,13 @@ class EcommerceService:
         self.project_id = project_id
         self.agent_id = agent_id
     
-    # API Request Pay Examples (按API次数付费)
+    # API Request Pay Examples
+    print("=== API Request Pay Examples ===")
     
     @meter_api_request_pay(client=None, unit_price=0.05)  # $0.05 per search
     def search_products(self, query: str, user_id: str) -> List[Dict]:
         """
         Product search API - charged per search request
-        产品搜索API - 按搜索请求次数收费
         """
         # Inject client dynamically
         EcommerceService.search_products.__wrapped__.__globals__['client'] = self.client
@@ -59,7 +59,6 @@ class EcommerceService:
     def get_recommendations(self, user_id: str, category: str = None) -> List[Dict]:
         """
         Product recommendation API - charged per recommendation request
-        产品推荐API - 按推荐请求次数收费
         """
         EcommerceService.get_recommendations.__wrapped__.__globals__['client'] = self.client
         
@@ -73,7 +72,8 @@ class EcommerceService:
         
         return recommendations
     
-    # Token-based Pay Examples (按Token付费)
+    # Token-based Pay Examples
+    print("\n=== Token-based Pay Examples ===")
     
     def extract_review_tokens(self, *args, result=None, **kwargs):
         """Extract token counts from review analysis"""
@@ -95,7 +95,6 @@ class EcommerceService:
     def analyze_product_reviews(self, review_text: str, user_id: str) -> Dict:
         """
         AI-powered review sentiment analysis - charged by token usage
-        AI评论情感分析 - 按Token使用量收费
         """
         EcommerceService.analyze_product_reviews.__wrapped__.__globals__['client'] = self.client
         
@@ -133,7 +132,6 @@ class EcommerceService:
     def generate_product_description(self, product_data: Dict, user_id: str) -> str:
         """
         AI-generated product descriptions - charged by token usage
-        AI产品描述生成 - 按Token使用量收费
         """
         EcommerceService.generate_product_description.__wrapped__.__globals__['client'] = self.client
         
@@ -151,7 +149,8 @@ class EcommerceService:
         
         return description.strip()
     
-    # Instant Pay Examples (即时付费)
+    # Instant Pay Examples
+    print("\n=== Instant Pay Examples ===")
     
     def should_charge_premium_support(self, *args, **kwargs):
         """Check if premium support should be charged"""
@@ -167,7 +166,6 @@ class EcommerceService:
     def get_customer_support(self, user_id: str, issue: str, support_type: str = "basic") -> Dict:
         """
         Customer support service - premium support charged instantly
-        客户支持服务 - 高级支持即时收费
         """
         EcommerceService.get_customer_support.__wrapped__.__globals__['client'] = self.client
         
@@ -193,7 +191,6 @@ class EcommerceService:
     def upgrade_shipping(self, order_id: str, user_id: str) -> Dict:
         """
         Express shipping upgrade - charged instantly
-        快递升级服务 - 即时收费
         """
         EcommerceService.upgrade_shipping.__wrapped__.__globals__['client'] = self.client
         
@@ -212,7 +209,6 @@ class EcommerceService:
     def process_bulk_order(self, user_id: str, items: List[Dict]) -> Dict:
         """
         Process bulk order with different payment types
-        批量订单处理，使用不同付费类型
         """
         print(f"📦 Processing bulk order for {len(items)} items")
         
@@ -276,7 +272,6 @@ class EcommerceService:
     def setup_user_subscription(self, user_id: str, plan: str) -> Dict:
         """
         Setup user subscription with meter limits
-        设置用户订阅计划和使用限额
         """
         print(f"🎯 Setting up {plan} subscription for user {user_id}")
         
@@ -306,7 +301,6 @@ class EcommerceService:
     def check_usage_status(self, user_id: str) -> Dict:
         """
         Check user's current usage status
-        检查用户当前使用状态
         """
         user_meter = self.client.get_user_meter(user_id=user_id)
         

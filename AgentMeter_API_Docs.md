@@ -457,6 +457,6 @@ console.log('Current usage:', userMeter.currentUsage);
 ## Support
 
 For support or questions about the API, please:
-- Email: support@agentmeter.com
-- Documentation: https://docs.agentmeter.com
-- Status Page: https://status.agentmeter.com 
+- Email: thomas.yu@knn3.xyz
+- Documentation: https://docs.agentmeter.money
+- Website: https://agentmeter.money 

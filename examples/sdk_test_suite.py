@@ -43,26 +43,26 @@ class SDKTestSuite:
         
         if API_KEY == "your_api_key_here":
             print("⚠️  Please configure AGENTMETER_API_KEY environment variable")
-            return False
-        
-        try:
+        return False
+    
+    try:
             # Create client
             self.client = create_client(
                 api_key=API_KEY,
-                project_id=PROJECT_ID,
-                agent_id=AGENT_ID,
+            project_id=PROJECT_ID,
+            agent_id=AGENT_ID,
                 user_id=f"{BASE_USER_ID}_setup"
             )
             
             # Test connection
             health = self.client.health_check()
             print(f"✅ Client created and connected: {health.get('status', 'unknown')}")
-            return True
-            
-        except Exception as e:
+        return True
+        
+    except Exception as e:
             print(f"❌ Setup failed: {e}")
-            return False
-    
+        return False
+
     def run_test(self, test_name: str, test_func):
         """Run a single test and track results"""
         self.test_count += 1
@@ -135,7 +135,7 @@ class SDKTestSuite:
             with track_api_request_pay(
                 self.client, PROJECT_ID, AGENT_ID,
                 user_id=user_id, unit_price=0.20
-            ) as usage:
+        ) as usage:
                 usage["api_calls"] = 2
                 usage["metadata"] = {"test": "context_manager"}
             
@@ -146,11 +146,11 @@ class SDKTestSuite:
             )
             
             print("   ✓ API request payment working")
-            return True
-            
-        except Exception as e:
+        return True
+        
+    except Exception as e:
             print(f"   ✗ API request payment failed: {e}")
-            return False
+        return False
     
     def test_token_based_pay(self):
         """Test token-based payment type"""
@@ -211,7 +211,7 @@ class SDKTestSuite:
             
             print("   ✓ Token-based payment working")
             return True
-            
+        
         except Exception as e:
             print(f"   ✗ Token-based payment failed: {e}")
             return False
@@ -276,12 +276,12 @@ class SDKTestSuite:
             )
             
             print("   ✓ Instant payment working")
-            return True
-            
-        except Exception as e:
+        return True
+        
+    except Exception as e:
             print(f"   ✗ Instant payment failed: {e}")
-            return False
-    
+        return False
+
     def test_user_meter_operations(self):
         """Test user meter management"""
         try:
@@ -346,12 +346,12 @@ class SDKTestSuite:
             assert hasattr(stats, 'total_api_calls')
             
             print("   ✓ Event retrieval working")
-            return True
-            
-        except Exception as e:
+        return True
+        
+    except Exception as e:
             print(f"   ✗ Event retrieval failed: {e}")
-            return False
-    
+        return False
+
     def test_agent_decorator(self):
         """Test agent-level decorators"""
         try:
@@ -586,7 +586,7 @@ class SDKTestSuite:
         
         if self.failed_tests == 0:
             print("\n🎉 All tests passed! SDK is working correctly.")
-        else:
+    else:
             print(f"\n⚠️  {self.failed_tests} test(s) failed. Please review the results above.")
         
         print("\nTest Coverage:")

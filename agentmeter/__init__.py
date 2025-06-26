@@ -1,7 +1,6 @@
-"""AgentMeter Python SDK
-
-A comprehensive SDK for integrating AgentMeter usage tracking and billing into your applications.
-支持三种付费模式：API请求付费、Token付费、即时付费。
+"""
+AgentMeter Python SDK - Usage tracking and billing for agent applications
+Supports three payment types: API Request Pay, Token-based Pay, and Instant Pay.
 """
 
 from .client import AgentMeterClient
@@ -61,7 +60,7 @@ def quick_api_request_pay(
     api_calls: int = 1,
     unit_price: float = 0.001
 ):
-    """Quick API request payment recording (按API次数付费)"""
+    """Quick API request payment recording"""
     return client.record_api_request_pay(
         api_calls=api_calls, 
         unit_price=unit_price,
@@ -80,7 +79,7 @@ def quick_token_based_pay(
     input_token_price: float = 0.000004,
     output_token_price: float = 0.000001
 ):
-    """Quick token-based payment recording (按Token付费)"""
+    """Quick token-based payment recording"""
     return client.record_token_based_pay(
         tokens_in=tokens_in,
         tokens_out=tokens_out,
@@ -99,7 +98,7 @@ def quick_instant_pay(
     amount: float = 0.0,
     description: str = "Instant payment"
 ):
-    """Quick instant payment recording (即时付费)"""
+    """Quick instant payment recording"""
     return client.record_instant_pay(
         amount=amount, 
         description=description,

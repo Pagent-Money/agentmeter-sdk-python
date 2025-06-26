@@ -11,28 +11,26 @@ from .models import PaymentType
 
 def meter_api_request_pay(
     client: AgentMeterClient,
-    unit_price: Optional[float] = None,
-    api_calls: int = 1,
+    unit_price: float = 0.001,
     project_id: Optional[str] = None,
     agent_id: Optional[str] = None,
-    user_id: Optional[str] = None,
-    metadata_func: Optional[Callable[..., Dict[str, Any]]] = None
+    user_id_param: str = "user_id",
+    api_calls: int = 1
 ):
     """
-    Decorator for tracking API request payments (按API次数付费)
+    Decorator for tracking API request payments
     
     Args:
         client: AgentMeter client instance
-        unit_price: Price per API call
-        api_calls: Number of API calls per function execution
-        project_id: Project ID (uses client default if not provided)
-        agent_id: Agent ID (uses client default if not provided)
-        user_id: User ID (uses client default if not provided)
-        metadata_func: Function to extract metadata from function args/kwargs
+        unit_price: Price per API request (default: $0.001)
+        project_id: Project ID (optional, uses client default)
+        agent_id: Agent ID (optional, uses client default)
+        user_id_param: Parameter name containing user_id (default: "user_id")
+        api_calls: Number of API calls per function execution (default: 1)
     
     Example:
         @meter_api_request_pay(client, unit_price=0.3)
-        def search_api(query):
+        def search_products(query: str, user_id: str):
             return perform_search(query)
     """
     def decorator(func: Callable) -> Callable:
@@ -42,11 +40,8 @@ def meter_api_request_pay(
             metadata = {}
             
             # Extract metadata using provided function
-            if metadata_func:
-                try:
-                    metadata.update(metadata_func(*args, **kwargs))
-                except Exception as e:
-                    metadata["metadata_error"] = str(e)
+            if user_id_param in kwargs:
+                metadata[user_id_param] = kwargs[user_id_param]
             
             # Add timing and function metadata
             metadata.update({
@@ -73,7 +68,7 @@ def meter_api_request_pay(
                     unit_price=unit_price,
                     project_id=project_id,
                     agent_id=agent_id,
-                    user_id=user_id,
+                    user_id=kwargs.get(user_id_param),
                     metadata=metadata
                 )
                 
@@ -96,7 +91,7 @@ def meter_api_request_pay(
                         unit_price=unit_price,
                         project_id=project_id,
                         agent_id=agent_id,
-                        user_id=user_id,
+                        user_id=kwargs.get(user_id_param),
                         metadata=metadata
                     )
                 except:
@@ -110,35 +105,30 @@ def meter_api_request_pay(
 
 def meter_token_based_pay(
     client: AgentMeterClient,
-    input_token_price: Optional[float] = None,
-    output_token_price: Optional[float] = None,
-    tokens_extractor: Optional[Callable[..., tuple]] = None,
+    input_token_price: float = 0.000004,
+    output_token_price: float = 0.000001,
     project_id: Optional[str] = None,
     agent_id: Optional[str] = None,
-    user_id: Optional[str] = None,
-    metadata_func: Optional[Callable[..., Dict[str, Any]]] = None
+    user_id_param: str = "user_id",
+    extract_tokens: bool = True
 ):
     """
-    Decorator for tracking token-based payments (按Token付费)
+    Decorator for tracking token-based payments
     
     Args:
         client: AgentMeter client instance
-        input_token_price: Price per input token
-        output_token_price: Price per output token
-        tokens_extractor: Function to extract (tokens_in, tokens_out) from function args/result
-        project_id: Project ID (uses client default if not provided)
-        agent_id: Agent ID (uses client default if not provided)
-        user_id: User ID (uses client default if not provided)
-        metadata_func: Function to extract metadata from function args/kwargs
+        input_token_price: Price per input token (default: $0.000004)
+        output_token_price: Price per output token (default: $0.000001)
+        project_id: Project ID (optional, uses client default)
+        agent_id: Agent ID (optional, uses client default)
+        user_id_param: Parameter name containing user_id (default: "user_id")
+        extract_tokens: Whether to automatically extract token counts (default: True)
     
     Example:
-        def extract_tokens(*args, result=None, **kwargs):
-            # Extract token counts from args or result
-            return (1000, 500)  # (tokens_in, tokens_out)
-        
-        @meter_token_based_pay(client, tokens_extractor=extract_tokens)
-        def llm_call(prompt):
-            return model.generate(prompt)
+        @meter_token_based_pay(client)
+        def generate_content(prompt: str, user_id: str):
+            response = llm.generate(prompt)
+            return response
     """
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -148,11 +138,8 @@ def meter_token_based_pay(
             tokens_in, tokens_out = 0, 0
             
             # Extract metadata using provided function
-            if metadata_func:
-                try:
-                    metadata.update(metadata_func(*args, **kwargs))
-                except Exception as e:
-                    metadata["metadata_error"] = str(e)
+            if user_id_param in kwargs:
+                metadata[user_id_param] = kwargs[user_id_param]
             
             # Add timing and function metadata
             metadata.update({
@@ -166,9 +153,9 @@ def meter_token_based_pay(
                 result = func(*args, **kwargs)
                 
                 # Extract token counts
-                if tokens_extractor:
+                if extract_tokens:
                     try:
-                        tokens_in, tokens_out = tokens_extractor(*args, result=result, **kwargs)
+                        tokens_in, tokens_out = extract_tokens(*args, result=result, **kwargs)
                     except Exception as e:
                         metadata["token_extraction_error"] = str(e)
                 
@@ -190,7 +177,7 @@ def meter_token_based_pay(
                     output_token_price=output_token_price,
                     project_id=project_id,
                     agent_id=agent_id,
-                    user_id=user_id,
+                    user_id=kwargs.get(user_id_param),
                     metadata=metadata
                 )
                 
@@ -215,7 +202,7 @@ def meter_token_based_pay(
                         output_token_price=output_token_price,
                         project_id=project_id,
                         agent_id=agent_id,
-                        user_id=user_id,
+                        user_id=kwargs.get(user_id_param),
                         metadata=metadata
                     )
                 except:
@@ -230,35 +217,28 @@ def meter_token_based_pay(
 def meter_instant_pay(
     client: AgentMeterClient,
     amount: float,
-    description: Optional[str] = None,
+    description: str = "Premium feature",
     project_id: Optional[str] = None,
     agent_id: Optional[str] = None,
-    user_id: Optional[str] = None,
-    metadata_func: Optional[Callable[..., Dict[str, Any]]] = None,
-    condition_func: Optional[Callable[..., bool]] = None
+    user_id_param: str = "user_id",
+    condition: Optional[Callable] = None
 ):
     """
-    Decorator for tracking instant payments (即时付费)
+    Decorator for tracking instant payments
     
     Args:
         client: AgentMeter client instance
-        amount: Amount to charge
-        description: Payment description
-        project_id: Project ID (uses client default if not provided)
-        agent_id: Agent ID (uses client default if not provided)
-        user_id: User ID (uses client default if not provided)
-        metadata_func: Function to extract metadata from function args/kwargs
-        condition_func: Function to determine if payment should be charged
+        amount: Fixed amount to charge
+        description: Payment description (default: "Premium feature")
+        project_id: Project ID (optional, uses client default)
+        agent_id: Agent ID (optional, uses client default)
+        user_id_param: Parameter name containing user_id (default: "user_id")
+        condition: Optional function to determine if payment should be charged
     
     Example:
-        def should_charge(*args, **kwargs):
-            return kwargs.get('premium', False)
-        
-        @meter_instant_pay(client, amount=4.99, description="Premium search", condition_func=should_charge)
-        def premium_search(query, premium=False):
-            if premium:
-                return advanced_search(query)
-            return basic_search(query)
+        @meter_instant_pay(client, amount=4.99, description="Advanced search")
+        def advanced_search(query: str, user_id: str):
+            return perform_advanced_search(query)
     """
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -268,19 +248,16 @@ def meter_instant_pay(
             should_charge = True
             
             # Check condition if provided
-            if condition_func:
+            if condition:
                 try:
-                    should_charge = condition_func(*args, **kwargs)
+                    should_charge = condition(*args, **kwargs)
                 except Exception as e:
                     metadata["condition_error"] = str(e)
                     should_charge = True  # Default to charging if condition check fails
             
             # Extract metadata using provided function
-            if metadata_func:
-                try:
-                    metadata.update(metadata_func(*args, **kwargs))
-                except Exception as e:
-                    metadata["metadata_error"] = str(e)
+            if user_id_param in kwargs:
+                metadata[user_id_param] = kwargs[user_id_param]
             
             # Add timing and function metadata
             metadata.update({
@@ -309,7 +286,7 @@ def meter_instant_pay(
                         description=description,
                         project_id=project_id,
                         agent_id=agent_id,
-                        user_id=user_id,
+                        user_id=kwargs.get(user_id_param),
                         metadata=metadata
                     )
                 

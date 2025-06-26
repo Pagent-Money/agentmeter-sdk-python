@@ -162,56 +162,56 @@ class AgentMeterTracker:
         self._should_stop = True
         self.flush()
     
-    def track_api_request_pay(
+    def track_api_request(
         self,
-        user_id: Optional[str] = None,
+        user_id: str,
         api_calls: int = 1,
         unit_price: Optional[float] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict] = None
     ):
-        """Track API request payment event (按API次数付费)"""
+        """Track API request payment event"""
         return UsageContext(
             client=self.client,
             project_id=self.project_id,
             agent_id=self.agent_id,
-            user_id=user_id or self.user_id,
+            user_id=user_id,
             payment_type=PaymentType.API_REQUEST_PAY,
             unit_price=unit_price or self.default_api_price
         )
     
-    def track_token_based_pay(
+    def track_token_usage(
         self,
-        user_id: Optional[str] = None,
-        tokens_in: int = 0,
-        tokens_out: int = 0,
+        user_id: str,
+        tokens_in: Optional[int] = None,
+        tokens_out: Optional[int] = None,
         input_token_price: Optional[float] = None,
         output_token_price: Optional[float] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict] = None
     ):
-        """Track token-based payment event (按Token付费)"""
+        """Track token-based payment event"""
         return UsageContext(
             client=self.client,
             project_id=self.project_id,
             agent_id=self.agent_id,
-            user_id=user_id or self.user_id,
+            user_id=user_id,
             payment_type=PaymentType.TOKEN_BASED_PAY,
             input_token_price=input_token_price or self.default_input_token_price,
             output_token_price=output_token_price or self.default_output_token_price
         )
     
-    def track_instant_pay(
+    def track_instant_payment(
         self,
-        user_id: Optional[str] = None,
-        amount: float = 0.0,
+        user_id: str,
+        amount: float,
         description: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict] = None
     ):
-        """Track instant payment event (即时付费)"""
+        """Track instant payment event"""
         return UsageContext(
             client=self.client,
             project_id=self.project_id,
             agent_id=self.agent_id,
-            user_id=user_id or self.user_id,
+            user_id=user_id,
             payment_type=PaymentType.INSTANT_PAY,
             amount=amount,
             description=description
@@ -290,7 +290,7 @@ def track_api_request_pay(
     unit_price: Optional[float] = None
 ) -> UsageContext:
     """
-    Context manager for tracking API request payment (按API次数付费)
+    Context manager for tracking API request payment
     
     Example:
         with track_api_request_pay(client, "proj_123", "agent_456", unit_price=0.3) as usage:
@@ -317,7 +317,7 @@ def track_token_based_pay(
     output_token_price: Optional[float] = None
 ) -> UsageContext:
     """
-    Context manager for tracking token-based payment (按Token付费)
+    Context manager for tracking token-based payment
     
     Example:
         with track_token_based_pay(client, "proj_123", "agent_456") as usage:
@@ -332,8 +332,8 @@ def track_token_based_pay(
         agent_id=agent_id,
         user_id=user_id,
         payment_type=PaymentType.TOKEN_BASED_PAY,
-        input_token_price=input_token_price,
-        output_token_price=output_token_price
+        input_token_price=input_token_price or self.default_input_token_price,
+        output_token_price=output_token_price or self.default_output_token_price
     )
 
 
@@ -346,7 +346,7 @@ def track_instant_pay(
     description: Optional[str] = None
 ) -> UsageContext:
     """
-    Context manager for tracking instant payment (即时付费)
+    Context manager for tracking instant payment
     
     Example:
         with track_instant_pay(client, "proj_123", "agent_456", description="Premium feature") as usage:

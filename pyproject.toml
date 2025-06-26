@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "agentmeter"
 version = "0.2.0"
 authors = [
-    {name = "AgentMeter Team", email = "thomas.yu@knn3.xyz"},
+    {name = "AgentMeter.Money", email = "thomas.yu@knn3.xyz"},
 ]
 description = "Python SDK for AgentMeter usage tracking and billing"
 readme = "README.md"

@@ -15,12 +15,13 @@ from .decorators import (
 from .langchain_integration import LangChainAgentMeterCallback
 from .models import (
     EventType, PaymentType, MeterEvent, APIRequestPayEvent, 
-    TokenBasedPayEvent, InstantPayEvent, AgentMeterConfig,
-    Project, UserMeter, MeterStats, BillingRecord
+    TokenBasedPayEvent, InstantPayEvent, MeterEventResponse, MeterEventsResponse,
+    AgentMeterConfig, Project, UserMeter, MeterStats, BillingRecord
 )
-from .exceptions import AgentMeterError, AgentMeterAPIError, AgentMeterValidationError
+from .exceptions import AgentMeterError, RateLimitError, AgentMeterAPIError, AgentMeterValidationError
 
 __version__ = "0.2.0"
+__author__ = "AgentMeter Team"
 
 # Convenience functions for easy integration
 def create_client(
@@ -134,6 +135,8 @@ __all__ = [
     'APIRequestPayEvent',
     'TokenBasedPayEvent',
     'InstantPayEvent',
+    'MeterEventResponse',
+    'MeterEventsResponse',
     'AgentMeterConfig',
     'Project',
     'UserMeter',
@@ -145,6 +148,7 @@ __all__ = [
     
     # Exceptions
     'AgentMeterError',
+    'RateLimitError',
     'AgentMeterAPIError',
     'AgentMeterValidationError',
     

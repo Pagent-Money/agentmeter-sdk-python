@@ -332,8 +332,8 @@ def track_token_based_pay(
         agent_id=agent_id,
         user_id=user_id,
         payment_type=PaymentType.TOKEN_BASED_PAY,
-        input_token_price=input_token_price or self.default_input_token_price,
-        output_token_price=output_token_price or self.default_output_token_price
+        input_token_price=input_token_price or 0.000004,
+        output_token_price=output_token_price or 0.000001
     )
 
 

@@ -2,14 +2,46 @@
 
 A comprehensive Python SDK for integrating AgentMeter usage tracking and billing into your applications. **Supports three payment types: API Request Pay, Token-based Pay, and Instant Pay.**
 
+## 🚀 Featured Integration: Coinbase AgentKit
+
+**AgentMeter now officially supports [Coinbase AgentKit](https://github.com/coinbase/agentkit)** - the leading framework for building AI agents that interact with onchain protocols!
+
+```python
+from agentmeter.integrations.coinbase import Web3AgentMeter
+from cdp import Cdp, Wallet
+
+# Initialize with full Web3 + AgentMeter integration
+web3_agent = Web3AgentMeter(
+    agentmeter_client=your_client,
+    cdp_api_key_name="your_coinbase_key",
+    cdp_private_key="your_private_key"
+)
+
+# AI-powered trading with automatic billing
+@web3_agent.meter_smart_trade(amount=4.99)
+async def execute_trade(user_id, asset_from, asset_to, amount):
+    return await web3_agent.execute_smart_trade(
+        user_id=user_id,
+        trade_type="market",
+        asset_from=asset_from,
+        asset_to=asset_to,
+        amount=amount
+    )
+```
+
+**[🔗 See Complete Coinbase AgentKit Integration Example](examples/coinbase_agentkit_integration.py)**
+
+---
+
 ## Table of Contents
 
+- [🚀 Featured Integration: Coinbase AgentKit](#-featured-integration-coinbase-agentkit)
 - [Features](#features)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Payment Types](#payment-types)
+- [Integration Examples](#integration-examples)
 - [API Reference](#api-reference)
-- [Examples](#examples)
 - [Configuration](#configuration)
 - [Error Handling](#error-handling)
 - [Testing](#testing)
@@ -17,7 +49,9 @@ A comprehensive Python SDK for integrating AgentMeter usage tracking and billing
 
 ## Features
 
+🚀 **Coinbase AgentKit Integration**: First-class support for Web3 AI agents  
 ✅ **Three Payment Models**: API requests, token-based, and instant payments  
+✅ **Blockchain-Ready**: Native support for Web3 operations and smart contracts  
 ✅ **Thread-Safe**: Safe for concurrent usage tracking  
 ✅ **Context Managers**: Clean resource management with automatic cleanup  
 ✅ **Decorators**: Easy function-level usage tracking  
@@ -53,8 +87,22 @@ await tracker.track_instant_payment(user_id="user123", amount=5.99)
 
 ## Installation
 
+### Basic Installation
+
 ```bash
 pip install agentmeter
+```
+
+### With Coinbase AgentKit Support
+
+```bash
+pip install agentmeter cdp-sdk coinbase-python-sdk
+```
+
+### With All Integrations
+
+```bash
+pip install agentmeter[all]  # Includes LangChain, Coinbase AgentKit, and more
 ```
 
 ## Quick Start
@@ -192,7 +240,95 @@ with track_instant_pay(client, project_id, agent_id) as usage:
 - `track_token_based_pay()` - Token-based payment tracking
 - `track_instant_pay()` - Instant payment tracking
 
-## Examples
+## Integration Examples
+
+### 🌟 Coinbase AgentKit Integration
+
+Build monetized Web3 AI agents with seamless blockchain integration:
+
+```python
+from agentmeter import create_client
+from examples.coinbase_agentkit_integration import Web3AgentMeter
+
+# Create AgentMeter client
+client = create_client(
+    api_key="your_api_key",
+    project_id="web3_proj",
+    agent_id="trading_agent"
+)
+
+# Initialize Web3 agent with comprehensive billing
+web3_agent = Web3AgentMeter(
+    agentmeter_client=client,
+    cdp_api_key_name="your_coinbase_key",
+    cdp_private_key="your_private_key"
+)
+
+# Multi-tier billing for Web3 operations:
+
+# 1. API Request Pay - Blockchain queries ($0.05/call)
+balance = web3_agent.get_wallet_balance("user123", "ETH")
+
+# 2. Token-based Pay - AI market analysis ($0.00003/input token)
+analysis = web3_agent.analyze_market_conditions("user123", "ETH", "advanced")
+
+# 3. Instant Pay - Premium trading features ($4.99)
+trade = web3_agent.execute_smart_trade(
+    user_id="user123",
+    trade_type="market", 
+    asset_from="USDC",
+    asset_to="ETH",
+    amount=150.0  # Triggers premium billing for large trades
+)
+```
+
+**[📖 Full Coinbase AgentKit Integration Guide](examples/coinbase_agentkit_integration.py)**
+
+### 🤖 LangChain Integration
+
+Automatically track and bill LLM operations in LangChain applications:
+
+```python
+from agentmeter.integrations.langchain import AgentMeterLangChainCallback
+
+# Add AgentMeter callback to LangChain
+callback = AgentMeterLangChainCallback(
+    client=client,
+    project_id="langchain_proj",
+    agent_id="llm_agent",
+    input_token_price=0.000015,
+    output_token_price=0.00002
+)
+
+# Automatic token tracking for all LLM calls
+llm = ChatOpenAI(callbacks=[callback])
+result = llm.predict("Analyze this market data...")
+```
+
+**[📖 Full LangChain Integration Guide](examples/langchain_integration_meter.py)**
+
+### 🛒 E-commerce Integration
+
+Monetize AI-powered e-commerce features:
+
+```python
+@meter_api_request_pay(client, unit_price=0.05)
+def search_products(query, user_id):
+    """Product search - $0.05 per search"""
+    return perform_ai_search(query)
+
+@meter_token_based_pay(client, tokens_extractor=extract_sentiment_tokens)
+def analyze_reviews(product_id, user_id):
+    """AI review analysis - charged by token usage"""
+    return ai_sentiment_analysis(product_id)
+
+@meter_instant_pay(client, amount=9.99, condition_func=is_premium_feature)
+def get_ai_recommendations(user_id, premium=False):
+    """Premium AI recommendations - $9.99 instant charge"""
+    return generate_premium_recommendations(user_id)
+```
+
+**[📖 Full E-commerce Integration Guide](examples/ecommerce_integration.py)**
 
 ### User Meter Management
 
@@ -360,14 +496,21 @@ except AgentMeterError as e:
 Run the example scripts:
 
 ```bash
+# 🚀 Coinbase AgentKit integration (Featured)
+python examples/coinbase_agentkit_integration.py
+
 # Basic usage examples
-python examples/basic_usage.py
+python examples/basic_usage_meter.py
+
+# AI/LLM integration examples
+python examples/langchain_integration_meter.py
+python examples/search_agent_meter.py
 
 # E-commerce integration example
 python examples/ecommerce_integration.py
 
-# LangChain integration example
-python examples/langchain_integration.py
+# MCP server integration
+python examples/mcp_server_meter.py
 ```
 
 Run tests:

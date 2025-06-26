@@ -135,7 +135,7 @@ class AgentMeterClient:
         response_data = self._request('POST', '/api/meter/event', data=event_data)
         return MeterEventResponse(**response_data)
     
-    async def record_api_request_pay(
+    def record_api_request_pay(
         self,
         project_id: Optional[str] = None,
         agent_id: Optional[str] = None,
@@ -155,7 +155,7 @@ class AgentMeterClient:
         )
         return self.record_event(event)
     
-    async def record_token_based_pay(
+    def record_token_based_pay(
         self,
         project_id: Optional[str] = None,
         agent_id: Optional[str] = None,
@@ -179,7 +179,7 @@ class AgentMeterClient:
         )
         return self.record_event(event)
     
-    async def record_instant_pay(
+    def record_instant_pay(
         self,
         project_id: Optional[str] = None,
         agent_id: Optional[str] = None,

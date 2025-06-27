@@ -1,3 +1,5 @@
+![AgentMeter SDK Banner](cover.png)
+
 # AgentMeter Python SDK
 
 A comprehensive Python SDK for integrating AgentMeter usage tracking and billing into your applications. **Supports three payment types: API Request Pay, Token-based Pay, and Instant Pay.**

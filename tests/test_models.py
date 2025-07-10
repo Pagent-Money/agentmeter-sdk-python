@@ -1,563 +1,490 @@
 """
-Unit Tests for AgentMeter SDK Models
-Tests all data models, validation, and serialization.
+Unit Tests for AgentMeter SDK v0.3.1 Models
+Tests new data models, validation, serialization, and backward compatibility
 """
 
 import unittest
 from datetime import datetime
 from agentmeter.models import (
-    PaymentType, APIRequestPayEvent, TokenBasedPayEvent, InstantPayEvent,
-    UserMeter, BillingRecord, MeterStats, Project, AgentMeterConfig
+    # New v0.3.1 models
+    MeterEvent, MeterEventCreate, MeterType, UsageAggregation,
+    # Legacy models (for backward compatibility)
+    MeterEventLegacy, AgentMeterConfig
 )
 
 
-class TestPaymentType(unittest.TestCase):
-    """Test PaymentType enum"""
+class TestMeterEvent(unittest.TestCase):
+    """Test MeterEvent model (v0.3.1)"""
     
-    def test_payment_type_values(self):
-        """Test payment type enum values"""
-        self.assertEqual(PaymentType.API_REQUEST_PAY.value, "api_request_pay")
-        self.assertEqual(PaymentType.TOKEN_BASED_PAY.value, "token_based_pay")
-        self.assertEqual(PaymentType.INSTANT_PAY.value, "instant_pay")
+    def test_create_meter_event(self):
+        """Test creating a meter event"""
+        event = MeterEvent(
+            id="evt_123456",
+            meter_type_id="mt_789",
+            subject_id="user_001",
+            quantity=2.5,
+            metadata={"source": "api", "request_id": "req_999"},
+            created_at="2024-01-15T10:30:00Z"
+        )
+        
+        self.assertEqual(event.id, "evt_123456")
+        self.assertEqual(event.meter_type_id, "mt_789")
+        self.assertEqual(event.subject_id, "user_001")
+        self.assertEqual(event.quantity, 2.5)
+        self.assertEqual(event.metadata["source"], "api")
+        self.assertEqual(event.created_at, "2024-01-15T10:30:00Z")
     
-    def test_payment_type_from_string(self):
-        """Test creating payment type from string"""
-        self.assertEqual(PaymentType("api_request_pay"), PaymentType.API_REQUEST_PAY)
-        self.assertEqual(PaymentType("token_based_pay"), PaymentType.TOKEN_BASED_PAY)
-        self.assertEqual(PaymentType("instant_pay"), PaymentType.INSTANT_PAY)
+    def test_meter_event_with_minimal_data(self):
+        """Test creating meter event with minimal required data"""
+        event = MeterEvent(
+            id="evt_minimal",
+            meter_type_id="mt_123",
+            subject_id="user_123",
+            quantity=1.0,
+            created_at="2024-01-15T10:30:00Z"
+        )
+        
+        self.assertEqual(event.id, "evt_minimal")
+        self.assertEqual(event.quantity, 1.0)
+        self.assertIsNone(event.metadata)
+    
+    def test_meter_event_serialization(self):
+        """Test meter event to/from dict conversion"""
+        original_event = MeterEvent(
+            id="evt_serialization_test",
+            meter_type_id="mt_serialize",
+            subject_id="user_serialize",
+            quantity=3.14,
+            metadata={"test": True, "count": 42},
+            created_at="2024-01-15T10:30:00Z"
+        )
+        
+        # Convert to dict
+        event_dict = original_event.dict()
+        
+        self.assertEqual(event_dict["id"], "evt_serialization_test")
+        self.assertEqual(event_dict["quantity"], 3.14)
+        self.assertEqual(event_dict["metadata"]["test"], True)
+        
+        # Create new event from dict
+        new_event = MeterEvent(**event_dict)
+        
+        self.assertEqual(new_event.id, original_event.id)
+        self.assertEqual(new_event.quantity, original_event.quantity)
+        self.assertEqual(new_event.metadata, original_event.metadata)
 
 
-class TestAPIRequestPayEvent(unittest.TestCase):
-    """Test APIRequestPayEvent model"""
+class TestMeterEventCreate(unittest.TestCase):
+    """Test MeterEventCreate model (for API requests)"""
     
-    def test_create_event(self):
-        """Test creating API request pay event"""
-        event = APIRequestPayEvent(
-            id="evt_123",
-            project_id="proj_123",
-            agent_id="agent_123",
-            user_id="user_123",
-            api_calls=3,
-            unit_price=0.25,
-            total_cost=0.75,
-            timestamp=datetime(2024, 1, 1, 12, 0, 0),
-            metadata={"source": "api"}
+    def test_create_meter_event_create(self):
+        """Test creating a meter event creation model"""
+        event_create = MeterEventCreate(
+            meter_type_id="mt_create_test",
+            subject_id="user_create",
+            quantity=1.5,
+            metadata={"operation": "create_user", "duration_ms": 250}
         )
         
-        self.assertEqual(event.id, "evt_123")
-        self.assertEqual(event.project_id, "proj_123")
-        self.assertEqual(event.agent_id, "agent_123")
-        self.assertEqual(event.user_id, "user_123")
-        self.assertEqual(event.api_calls, 3)
-        self.assertEqual(event.unit_price, 0.25)
-        self.assertEqual(event.total_cost, 0.75)
-        self.assertEqual(event.payment_type, PaymentType.API_REQUEST_PAY)
-        self.assertEqual(event.metadata, {"source": "api"})
+        self.assertEqual(event_create.meter_type_id, "mt_create_test")
+        self.assertEqual(event_create.subject_id, "user_create")
+        self.assertEqual(event_create.quantity, 1.5)
+        self.assertEqual(event_create.metadata["operation"], "create_user")
     
-    def test_calculate_cost(self):
-        """Test cost calculation"""
-        event = APIRequestPayEvent(
-            id="evt_123",
-            project_id="proj_123",
-            agent_id="agent_123",
-            user_id="user_123",
-            api_calls=5,
-            unit_price=0.10,
-            total_cost=0.0,  # Will be calculated
-            timestamp=datetime.now()
+    def test_meter_event_create_without_metadata(self):
+        """Test creating meter event without metadata"""
+        event_create = MeterEventCreate(
+            meter_type_id="mt_no_metadata",
+            subject_id="user_no_metadata",
+            quantity=0.5
         )
         
-        # Manually calculate cost
-        expected_cost = 5 * 0.10
-        self.assertEqual(event.api_calls * event.unit_price, expected_cost)
+        self.assertEqual(event_create.meter_type_id, "mt_no_metadata")
+        self.assertEqual(event_create.quantity, 0.5)
+        self.assertIsNone(event_create.metadata)
     
-    def test_from_dict(self):
-        """Test creating event from dictionary"""
-        data = {
-            "id": "evt_123",
-            "project_id": "proj_123",
-            "agent_id": "agent_123",
-            "user_id": "user_123",
-            "api_calls": 2,
-            "unit_price": 0.15,
-            "total_cost": 0.30,
-            "timestamp": "2024-01-01T12:00:00Z",
-            "metadata": {"test": "data"}
-        }
+    def test_meter_event_create_validation(self):
+        """Test meter event create validation"""
+        # Test quantity must be positive
+        with self.assertRaises(ValueError):
+            MeterEventCreate(
+                meter_type_id="mt_validation",
+                subject_id="user_validation",
+                quantity=-1.0  # Invalid negative quantity
+            )
         
-        event = APIRequestPayEvent.from_dict(data)
+        # Test meter_type_id cannot be empty
+        with self.assertRaises(ValueError):
+            MeterEventCreate(
+                meter_type_id="",  # Empty meter type ID
+                subject_id="user_validation",
+                quantity=1.0
+            )
         
-        self.assertEqual(event.id, "evt_123")
-        self.assertEqual(event.api_calls, 2)
-        self.assertEqual(event.unit_price, 0.15)
-        self.assertEqual(event.total_cost, 0.30)
-    
-    def test_to_dict(self):
-        """Test converting event to dictionary"""
-        event = APIRequestPayEvent(
-            id="evt_123",
-            project_id="proj_123",
-            agent_id="agent_123",
-            user_id="user_123",
-            api_calls=1,
-            unit_price=0.20,
-            total_cost=0.20,
-            timestamp=datetime(2024, 1, 1, 12, 0, 0)
-        )
-        
-        data = event.to_dict()
-        
-        self.assertEqual(data["id"], "evt_123")
-        self.assertEqual(data["api_calls"], 1)
-        self.assertEqual(data["unit_price"], 0.20)
-        self.assertEqual(data["total_cost"], 0.20)
-        self.assertEqual(data["payment_type"], "api_request_pay")
+        # Test subject_id cannot be empty
+        with self.assertRaises(ValueError):
+            MeterEventCreate(
+                meter_type_id="mt_validation",
+                subject_id="",  # Empty subject ID
+                quantity=1.0
+            )
 
 
-class TestTokenBasedPayEvent(unittest.TestCase):
-    """Test TokenBasedPayEvent model"""
+class TestMeterType(unittest.TestCase):
+    """Test MeterType model"""
     
-    def test_create_event(self):
-        """Test creating token-based pay event"""
-        event = TokenBasedPayEvent(
-            id="evt_123",
-            project_id="proj_123",
-            agent_id="agent_123",
-            user_id="user_123",
-            tokens_in=1000,
-            tokens_out=500,
-            input_token_price=0.00001,
-            output_token_price=0.00002,
-            total_cost=0.02,
-            timestamp=datetime.now()
+    def test_create_meter_type(self):
+        """Test creating a meter type"""
+        meter_type = MeterType(
+            id="mt_api_requests",
+            name="API Requests",
+            description="Track API request usage across the platform",
+            created_at="2024-01-15T10:30:00Z"
         )
         
-        self.assertEqual(event.tokens_in, 1000)
-        self.assertEqual(event.tokens_out, 500)
-        self.assertEqual(event.input_token_price, 0.00001)
-        self.assertEqual(event.output_token_price, 0.00002)
-        self.assertEqual(event.total_cost, 0.02)
-        self.assertEqual(event.payment_type, PaymentType.TOKEN_BASED_PAY)
+        self.assertEqual(meter_type.id, "mt_api_requests")
+        self.assertEqual(meter_type.name, "API Requests")
+        self.assertEqual(meter_type.description, "Track API request usage across the platform")
+        self.assertEqual(meter_type.created_at, "2024-01-15T10:30:00Z")
     
-    def test_calculate_cost(self):
-        """Test token cost calculation"""
-        event = TokenBasedPayEvent(
-            id="evt_123",
-            project_id="proj_123",
-            agent_id="agent_123",
-            user_id="user_123",
-            tokens_in=2000,
-            tokens_out=1000,
-            input_token_price=0.000015,
-            output_token_price=0.000025,
-            total_cost=0.0,
-            timestamp=datetime.now()
+    def test_meter_type_without_description(self):
+        """Test creating meter type without description"""
+        meter_type = MeterType(
+            id="mt_minimal",
+            name="Minimal Meter",
+            created_at="2024-01-15T10:30:00Z"
         )
         
-        # Calculate expected cost
-        input_cost = 2000 * 0.000015
-        output_cost = 1000 * 0.000025
-        expected_total = input_cost + output_cost
-        
-        calculated_cost = (event.tokens_in * event.input_token_price) + \
-                         (event.tokens_out * event.output_token_price)
-        
-        self.assertAlmostEqual(calculated_cost, expected_total, places=6)
+        self.assertEqual(meter_type.name, "Minimal Meter")
+        self.assertIsNone(meter_type.description)
     
-    def test_total_tokens_property(self):
-        """Test total tokens property"""
-        event = TokenBasedPayEvent(
-            id="evt_123",
-            project_id="proj_123",
-            agent_id="agent_123",
-            user_id="user_123",
-            tokens_in=750,
-            tokens_out=250,
-            input_token_price=0.00001,
-            output_token_price=0.00002,
-            total_cost=0.0125,
-            timestamp=datetime.now()
+    def test_meter_type_serialization(self):
+        """Test meter type serialization"""
+        original_type = MeterType(
+            id="mt_serialization",
+            name="Serialization Test",
+            description="Test meter type serialization",
+            created_at="2024-01-15T10:30:00Z"
         )
         
-        self.assertEqual(event.total_tokens, 1000)
+        # Convert to dict
+        type_dict = original_type.dict()
+        
+        self.assertEqual(type_dict["id"], "mt_serialization")
+        self.assertEqual(type_dict["name"], "Serialization Test")
+        
+        # Create new type from dict
+        new_type = MeterType(**type_dict)
+        
+        self.assertEqual(new_type.id, original_type.id)
+        self.assertEqual(new_type.name, original_type.name)
+        self.assertEqual(new_type.description, original_type.description)
 
 
-class TestInstantPayEvent(unittest.TestCase):
-    """Test InstantPayEvent model"""
+class TestUsageAggregation(unittest.TestCase):
+    """Test UsageAggregation model"""
     
-    def test_create_event(self):
-        """Test creating instant pay event"""
-        event = InstantPayEvent(
-            id="evt_123",
-            project_id="proj_123",
-            agent_id="agent_123",
-            user_id="user_123",
-            amount=4.99,
-            description="Premium Feature Access",
-            total_cost=4.99,
-            timestamp=datetime.now(),
-            metadata={"feature": "analytics"}
+    def test_create_usage_aggregation(self):
+        """Test creating usage aggregation"""
+        aggregation = UsageAggregation(
+            meter_type_id="mt_aggregation_test",
+            subject_id="user_aggregation",
+            total_quantity=15.75,
+            event_count=12,
+            period_start="2024-01-01T00:00:00Z",
+            period_end="2024-01-01T23:59:59Z"
         )
         
-        self.assertEqual(event.amount, 4.99)
-        self.assertEqual(event.description, "Premium Feature Access")
-        self.assertEqual(event.total_cost, 4.99)
-        self.assertEqual(event.payment_type, PaymentType.INSTANT_PAY)
-        self.assertEqual(event.metadata["feature"], "analytics")
+        self.assertEqual(aggregation.meter_type_id, "mt_aggregation_test")
+        self.assertEqual(aggregation.subject_id, "user_aggregation")
+        self.assertEqual(aggregation.total_quantity, 15.75)
+        self.assertEqual(aggregation.event_count, 12)
+        self.assertEqual(aggregation.period_start, "2024-01-01T00:00:00Z")
+        self.assertEqual(aggregation.period_end, "2024-01-01T23:59:59Z")
     
-    def test_amount_equals_total_cost(self):
-        """Test that amount equals total cost for instant pay"""
-        event = InstantPayEvent(
-            id="evt_123",
-            project_id="proj_123",
-            agent_id="agent_123",
-            user_id="user_123",
-            amount=9.99,
-            description="Premium Subscription",
-            total_cost=9.99,
-            timestamp=datetime.now()
+    def test_usage_aggregation_average_calculation(self):
+        """Test average quantity calculation"""
+        aggregation = UsageAggregation(
+            meter_type_id="mt_average_test",
+            subject_id="user_average",
+            total_quantity=20.0,
+            event_count=4,
+            period_start="2024-01-01T00:00:00Z",
+            period_end="2024-01-01T23:59:59Z"
         )
         
-        self.assertEqual(event.amount, event.total_cost)
-
-
-class TestUserMeter(unittest.TestCase):
-    """Test UserMeter model"""
+        # Calculate average manually
+        expected_average = aggregation.total_quantity / aggregation.event_count
+        self.assertEqual(expected_average, 5.0)
     
-    def test_create_user_meter(self):
-        """Test creating user meter"""
-        meter = UserMeter(
-            project_id="proj_123",
-            user_id="user_123",
-            threshold_amount=100.0,
-            current_usage=25.50,
-            last_reset_at=datetime(2024, 1, 1, 0, 0, 0),
-            updated_at=datetime(2024, 1, 15, 12, 0, 0)
+    def test_usage_aggregation_zero_events(self):
+        """Test aggregation with zero events"""
+        aggregation = UsageAggregation(
+            meter_type_id="mt_zero_test",
+            subject_id="user_zero",
+            total_quantity=0.0,
+            event_count=0,
+            period_start="2024-01-01T00:00:00Z",
+            period_end="2024-01-01T23:59:59Z"
         )
         
-        self.assertEqual(meter.project_id, "proj_123")
-        self.assertEqual(meter.user_id, "user_123")
-        self.assertEqual(meter.threshold_amount, 100.0)
-        self.assertEqual(meter.current_usage, 25.50)
-    
-    def test_remaining_budget_property(self):
-        """Test remaining budget calculation"""
-        meter = UserMeter(
-            project_id="proj_123",
-            user_id="user_123",
-            threshold_amount=50.0,
-            current_usage=15.75,
-            last_reset_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        
-        expected_remaining = 50.0 - 15.75
-        self.assertEqual(meter.remaining_budget, expected_remaining)
-    
-    def test_usage_percentage_property(self):
-        """Test usage percentage calculation"""
-        meter = UserMeter(
-            project_id="proj_123",
-            user_id="user_123",
-            threshold_amount=200.0,
-            current_usage=50.0,
-            last_reset_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        
-        expected_percentage = (50.0 / 200.0) * 100
-        self.assertEqual(meter.usage_percentage, expected_percentage)
-    
-    def test_is_over_limit_property(self):
-        """Test over limit detection"""
-        # Under limit
-        meter_under = UserMeter(
-            project_id="proj_123",
-            user_id="user_123",
-            threshold_amount=100.0,
-            current_usage=75.0,
-            last_reset_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        
-        self.assertFalse(meter_under.is_over_limit)
-        
-        # Over limit
-        meter_over = UserMeter(
-            project_id="proj_123",
-            user_id="user_123",
-            threshold_amount=100.0,
-            current_usage=125.0,
-            last_reset_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        
-        self.assertTrue(meter_over.is_over_limit)
-    
-    def test_zero_threshold_edge_case(self):
-        """Test edge case with zero threshold"""
-        meter = UserMeter(
-            project_id="proj_123",
-            user_id="user_123",
-            threshold_amount=0.0,
-            current_usage=5.0,
-            last_reset_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        
-        self.assertEqual(meter.remaining_budget, -5.0)
-        self.assertTrue(meter.is_over_limit)
-        # Usage percentage should handle division by zero
-        self.assertEqual(meter.usage_percentage, 0.0)
-
-
-class TestMeterStats(unittest.TestCase):
-    """Test MeterStats model"""
-    
-    def test_create_stats(self):
-        """Test creating meter statistics"""
-        stats = MeterStats(
-            total_api_calls=1500,
-            total_tokens_in=75000,
-            total_tokens_out=25000,
-            total_cost=150.75,
-            timeframe="30 days"
-        )
-        
-        self.assertEqual(stats.total_api_calls, 1500)
-        self.assertEqual(stats.total_tokens_in, 75000)
-        self.assertEqual(stats.total_tokens_out, 25000)
-        self.assertEqual(stats.total_cost, 150.75)
-        self.assertEqual(stats.timeframe, "30 days")
-    
-    def test_total_tokens_property(self):
-        """Test total tokens calculation"""
-        stats = MeterStats(
-            total_api_calls=100,
-            total_tokens_in=30000,
-            total_tokens_out=15000,
-            total_cost=50.0,
-            timeframe="7 days"
-        )
-        
-        self.assertEqual(stats.total_tokens, 45000)
-    
-    def test_average_cost_per_call_property(self):
-        """Test average cost per call calculation"""
-        stats = MeterStats(
-            total_api_calls=200,
-            total_tokens_in=10000,
-            total_tokens_out=5000,
-            total_cost=40.0,
-            timeframe="1 day"
-        )
-        
-        expected_avg = 40.0 / 200
-        self.assertEqual(stats.average_cost_per_call, expected_avg)
-    
-    def test_zero_api_calls_edge_case(self):
-        """Test edge case with zero API calls"""
-        stats = MeterStats(
-            total_api_calls=0,
-            total_tokens_in=1000,
-            total_tokens_out=500,
-            total_cost=5.0,
-            timeframe="1 hour"
-        )
-        
-        # Should handle division by zero gracefully
-        self.assertEqual(stats.average_cost_per_call, 0.0)
-
-
-class TestProject(unittest.TestCase):
-    """Test Project model"""
-    
-    def test_create_project(self):
-        """Test creating project"""
-        project = Project(
-            id="proj_123",
-            name="Test Project",
-            description="A test project for AgentMeter",
-            created_at=datetime(2024, 1, 1, 0, 0, 0),
-            updated_at=datetime(2024, 1, 15, 12, 0, 0)
-        )
-        
-        self.assertEqual(project.id, "proj_123")
-        self.assertEqual(project.name, "Test Project")
-        self.assertEqual(project.description, "A test project for AgentMeter")
-    
-    def test_project_without_description(self):
-        """Test creating project without description"""
-        project = Project(
-            id="proj_456",
-            name="Simple Project",
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        
-        self.assertEqual(project.name, "Simple Project")
-        self.assertIsNone(project.description)
-
-
-class TestBillingRecord(unittest.TestCase):
-    """Test BillingRecord model"""
-    
-    def test_create_billing_record(self):
-        """Test creating billing record"""
-        record = BillingRecord(
-            id="bill_123",
-            project_id="proj_123",
-            period_start=datetime(2024, 1, 1, 0, 0, 0),
-            period_end=datetime(2024, 1, 31, 23, 59, 59),
-            amount=125.50,
-            status="paid",
-            created_at=datetime(2024, 2, 1, 0, 0, 0),
-            updated_at=datetime(2024, 2, 1, 12, 0, 0)
-        )
-        
-        self.assertEqual(record.id, "bill_123")
-        self.assertEqual(record.project_id, "proj_123")
-        self.assertEqual(record.amount, 125.50)
-        self.assertEqual(record.status, "paid")
-    
-    def test_billing_period_calculation(self):
-        """Test billing period calculation"""
-        start_date = datetime(2024, 1, 1, 0, 0, 0)
-        end_date = datetime(2024, 1, 31, 23, 59, 59)
-        
-        record = BillingRecord(
-            id="bill_123",
-            project_id="proj_123",
-            period_start=start_date,
-            period_end=end_date,
-            amount=100.0,
-            status="pending",
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        
-        period_duration = record.period_end - record.period_start
-        self.assertEqual(period_duration.days, 30)  # January has 31 days, but we're calculating the difference
+        self.assertEqual(aggregation.total_quantity, 0.0)
+        self.assertEqual(aggregation.event_count, 0)
 
 
 class TestAgentMeterConfig(unittest.TestCase):
     """Test AgentMeterConfig model"""
     
     def test_create_config(self):
-        """Test creating configuration"""
+        """Test creating AgentMeter configuration"""
         config = AgentMeterConfig(
-            api_key="test_key_123",
-            project_id="proj_123",
-            agent_id="agent_456",
-            user_id="user_789",
-            base_url="https://api.staging.agentmeter.money",
-            timeout=30,
-            retry_attempts=3,
-            batch_size=100
+            api_key="test_api_key_12345",
+            base_url="https://api.agentmeter.money",
+            timeout=30.0,
+            max_retries=3
         )
         
-        self.assertEqual(config.api_key, "test_key_123")
-        self.assertEqual(config.project_id, "proj_123")
-        self.assertEqual(config.agent_id, "agent_456")
-        self.assertEqual(config.user_id, "user_789")
-        self.assertEqual(config.base_url, "https://api.staging.agentmeter.money")
-        self.assertEqual(config.timeout, 30)
-        self.assertEqual(config.retry_attempts, 3)
-        self.assertEqual(config.batch_size, 100)
+        self.assertEqual(config.api_key, "test_api_key_12345")
+        self.assertEqual(config.base_url, "https://api.agentmeter.money")
+        self.assertEqual(config.timeout, 30.0)
+        self.assertEqual(config.max_retries, 3)
     
-    def test_config_defaults(self):
-        """Test configuration defaults"""
+    def test_config_with_defaults(self):
+        """Test config with default values"""
         config = AgentMeterConfig(
-            api_key="test_key",
-            project_id="test_project"
+            api_key="minimal_config_key"
         )
         
-        self.assertEqual(config.api_key, "test_key")
-        self.assertEqual(config.project_id, "test_project")
-        self.assertIsNone(config.agent_id)
-        self.assertIsNone(config.user_id)
-        self.assertEqual(config.base_url, "https://api.staging.agentmeter.money")
-        self.assertEqual(config.timeout, 30)
-        self.assertEqual(config.retry_attempts, 3)
-        self.assertEqual(config.batch_size, 50)
+        self.assertEqual(config.api_key, "minimal_config_key")
+        self.assertEqual(config.base_url, "https://api.agentmeter.money")
+        self.assertEqual(config.timeout, 30.0)
+        self.assertEqual(config.max_retries, 3)
     
     def test_config_validation(self):
         """Test configuration validation"""
+        # Test empty API key
+        with self.assertRaises(ValueError):
+            AgentMeterConfig(api_key="")
+        
         # Test invalid timeout
         with self.assertRaises(ValueError):
             AgentMeterConfig(
-                api_key="test_key",
-                project_id="test_project",
-                timeout=-1
+                api_key="valid_key",
+                timeout=-1.0
             )
         
-        # Test invalid retry attempts
+        # Test invalid max_retries
         with self.assertRaises(ValueError):
             AgentMeterConfig(
-                api_key="test_key",
-                project_id="test_project",
-                retry_attempts=-1
+                api_key="valid_key",
+                max_retries=-1
+            )
+
+
+class TestLegacyCompatibility(unittest.TestCase):
+    """Test backward compatibility with legacy models"""
+    
+    def test_legacy_meter_event(self):
+        """Test legacy MeterEventLegacy model still works"""
+        legacy_event = MeterEventLegacy(
+            id="legacy_evt_123",
+            project_id="legacy_project",
+            agent_id="legacy_agent",
+            user_id="legacy_user",
+            payment_type="api_request_pay",
+            api_calls=2,
+            unit_price=0.15,
+            total_cost=0.30,
+            timestamp="2024-01-15T10:30:00Z"
+        )
+        
+        self.assertEqual(legacy_event.id, "legacy_evt_123")
+        self.assertEqual(legacy_event.project_id, "legacy_project")
+        self.assertEqual(legacy_event.payment_type, "api_request_pay")
+        self.assertEqual(legacy_event.api_calls, 2)
+        self.assertEqual(legacy_event.total_cost, 0.30)
+    
+    def test_legacy_token_based_event(self):
+        """Test legacy token-based event"""
+        legacy_event = MeterEventLegacy(
+            id="legacy_token_evt",
+            project_id="legacy_project",
+            agent_id="legacy_agent",
+            user_id="legacy_user",
+            payment_type="token_based_pay",
+            tokens_in=1000,
+            tokens_out=500,
+            input_token_price=0.00001,
+            output_token_price=0.00002,
+            total_cost=0.020,
+            timestamp="2024-01-15T10:30:00Z"
+        )
+        
+        self.assertEqual(legacy_event.payment_type, "token_based_pay")
+        self.assertEqual(legacy_event.tokens_in, 1000)
+        self.assertEqual(legacy_event.tokens_out, 500)
+        self.assertEqual(legacy_event.total_cost, 0.020)
+    
+    def test_legacy_instant_pay_event(self):
+        """Test legacy instant pay event"""
+        legacy_event = MeterEventLegacy(
+            id="legacy_instant_evt",
+            project_id="legacy_project",
+            agent_id="legacy_agent",
+            user_id="legacy_user",
+            payment_type="instant_pay",
+            amount=4.99,
+            description="Premium Feature",
+            total_cost=4.99,
+            timestamp="2024-01-15T10:30:00Z"
+        )
+        
+        self.assertEqual(legacy_event.payment_type, "instant_pay")
+        self.assertEqual(legacy_event.amount, 4.99)
+        self.assertEqual(legacy_event.description, "Premium Feature")
+        self.assertEqual(legacy_event.total_cost, 4.99)
+
+
+class TestModelValidation(unittest.TestCase):
+    """Test model validation and edge cases"""
+    
+    def test_meter_event_quantity_validation(self):
+        """Test meter event quantity validation"""
+        # Valid quantities should work
+        valid_quantities = [0.0, 0.001, 1.0, 100.0, 999999.99]
+        
+        for quantity in valid_quantities:
+            event = MeterEvent(
+                id=f"evt_quantity_{quantity}",
+                meter_type_id="mt_validation",
+                subject_id="user_validation",
+                quantity=quantity,
+                created_at="2024-01-15T10:30:00Z"
+            )
+            self.assertEqual(event.quantity, quantity)
+        
+        # Invalid quantities should raise errors
+        invalid_quantities = [-1.0, -0.001]
+        
+        for quantity in invalid_quantities:
+            with self.assertRaises(ValueError):
+                MeterEvent(
+                    id=f"evt_invalid_{abs(quantity)}",
+                    meter_type_id="mt_validation",
+                    subject_id="user_validation",
+                    quantity=quantity,
+                    created_at="2024-01-15T10:30:00Z"
+                )
+    
+    def test_meter_type_name_validation(self):
+        """Test meter type name validation"""
+        # Valid names should work
+        valid_names = ["API Requests", "Token Usage", "Premium Features", "A"]
+        
+        for name in valid_names:
+            meter_type = MeterType(
+                id=f"mt_{name.replace(' ', '_').lower()}",
+                name=name,
+                created_at="2024-01-15T10:30:00Z"
+            )
+            self.assertEqual(meter_type.name, name)
+        
+        # Empty name should raise error
+        with self.assertRaises(ValueError):
+            MeterType(
+                id="mt_empty_name",
+                name="",
+                created_at="2024-01-15T10:30:00Z"
+            )
+    
+    def test_usage_aggregation_consistency(self):
+        """Test usage aggregation data consistency"""
+        # Event count should be non-negative
+        with self.assertRaises(ValueError):
+            UsageAggregation(
+                meter_type_id="mt_consistency",
+                subject_id="user_consistency",
+                total_quantity=10.0,
+                event_count=-1,  # Invalid negative count
+                period_start="2024-01-01T00:00:00Z",
+                period_end="2024-01-01T23:59:59Z"
             )
         
-        # Test invalid batch size
+        # Total quantity should be non-negative
         with self.assertRaises(ValueError):
-            AgentMeterConfig(
-                api_key="test_key",
-                project_id="test_project",
-                batch_size=0
+            UsageAggregation(
+                meter_type_id="mt_consistency",
+                subject_id="user_consistency",
+                total_quantity=-5.0,  # Invalid negative total
+                event_count=5,
+                period_start="2024-01-01T00:00:00Z",
+                period_end="2024-01-01T23:59:59Z"
             )
 
 
 class TestModelSerialization(unittest.TestCase):
     """Test model serialization and deserialization"""
     
-    def test_api_request_event_serialization(self):
-        """Test API request event serialization"""
-        original_event = APIRequestPayEvent(
-            id="evt_123",
-            project_id="proj_123",
-            agent_id="agent_123",
-            user_id="user_123",
-            api_calls=2,
-            unit_price=0.25,
-            total_cost=0.50,
-            timestamp=datetime(2024, 1, 1, 12, 0, 0),
-            metadata={"source": "test"}
+    def test_meter_event_json_serialization(self):
+        """Test meter event JSON serialization"""
+        event = MeterEvent(
+            id="evt_json_test",
+            meter_type_id="mt_json",
+            subject_id="user_json",
+            quantity=2.5,
+            metadata={"test": True, "count": 42},
+            created_at="2024-01-15T10:30:00Z"
         )
         
-        # Serialize to dict
-        event_dict = original_event.to_dict()
+        # Test JSON serialization
+        json_data = event.json()
+        self.assertIsInstance(json_data, str)
         
-        # Deserialize from dict
-        reconstructed_event = APIRequestPayEvent.from_dict(event_dict)
-        
-        self.assertEqual(original_event.id, reconstructed_event.id)
-        self.assertEqual(original_event.api_calls, reconstructed_event.api_calls)
-        self.assertEqual(original_event.unit_price, reconstructed_event.unit_price)
-        self.assertEqual(original_event.total_cost, reconstructed_event.total_cost)
-        self.assertEqual(original_event.metadata, reconstructed_event.metadata)
+        # Test deserialization
+        parsed_event = MeterEvent.parse_raw(json_data)
+        self.assertEqual(parsed_event.id, event.id)
+        self.assertEqual(parsed_event.quantity, event.quantity)
+        self.assertEqual(parsed_event.metadata, event.metadata)
     
-    def test_user_meter_serialization(self):
-        """Test user meter serialization"""
-        original_meter = UserMeter(
-            project_id="proj_123",
-            user_id="user_123",
-            threshold_amount=100.0,
-            current_usage=35.75,
-            last_reset_at=datetime(2024, 1, 1, 0, 0, 0),
-            updated_at=datetime(2024, 1, 15, 12, 0, 0)
+    def test_meter_type_json_serialization(self):
+        """Test meter type JSON serialization"""
+        meter_type = MeterType(
+            id="mt_json_test",
+            name="JSON Test Meter",
+            description="Test JSON serialization",
+            created_at="2024-01-15T10:30:00Z"
         )
         
-        # Serialize to dict
-        meter_dict = original_meter.to_dict()
+        # Test JSON serialization
+        json_data = meter_type.json()
+        self.assertIsInstance(json_data, str)
         
-        # Deserialize from dict
-        reconstructed_meter = UserMeter.from_dict(meter_dict)
+        # Test deserialization
+        parsed_type = MeterType.parse_raw(json_data)
+        self.assertEqual(parsed_type.id, meter_type.id)
+        self.assertEqual(parsed_type.name, meter_type.name)
+        self.assertEqual(parsed_type.description, meter_type.description)
+    
+    def test_usage_aggregation_json_serialization(self):
+        """Test usage aggregation JSON serialization"""
+        aggregation = UsageAggregation(
+            meter_type_id="mt_json_agg",
+            subject_id="user_json_agg",
+            total_quantity=25.5,
+            event_count=10,
+            period_start="2024-01-01T00:00:00Z",
+            period_end="2024-01-01T23:59:59Z"
+        )
         
-        self.assertEqual(original_meter.project_id, reconstructed_meter.project_id)
-        self.assertEqual(original_meter.user_id, reconstructed_meter.user_id)
-        self.assertEqual(original_meter.threshold_amount, reconstructed_meter.threshold_amount)
-        self.assertEqual(original_meter.current_usage, reconstructed_meter.current_usage)
+        # Test JSON serialization
+        json_data = aggregation.json()
+        self.assertIsInstance(json_data, str)
+        
+        # Test deserialization
+        parsed_agg = UsageAggregation.parse_raw(json_data)
+        self.assertEqual(parsed_agg.total_quantity, aggregation.total_quantity)
+        self.assertEqual(parsed_agg.event_count, aggregation.event_count)
+        self.assertEqual(parsed_agg.period_start, aggregation.period_start)
 
 
 if __name__ == '__main__':

@@ -509,7 +509,7 @@ class CoinbaseAgentKitDemo:
             api_key=AGENTMETER_API_KEY,
             project_id=PROJECT_ID,
             agent_id=AGENT_ID,
-            base_url="https://api.staging.agentmeter.money"
+            base_url="https://api.agentmeter.money"
         )
         
         # Initialize Web3 agent with metering

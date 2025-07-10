@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentmeter"
-version = "0.2.0"
+version = "0.3.1"
 authors = [
     {name = "AgentMeter.Money", email = "thomas.yu@knn3.xyz"},
 ]

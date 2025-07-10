@@ -1,9 +1,11 @@
 """
 AgentMeter Python SDK - Usage tracking and billing for agent applications
-Supports three payment types: API Request Pay, Token-based Pay, and Instant Pay.
+
+Version 0.3.1 introduces a new resource-based architecture while maintaining
+backward compatibility with existing code.
 """
 
-from .client import AgentMeterClient
+from .client import AgentMeter, AsyncAgentMeter, AgentMeterClient
 from .tracker import (
     AgentMeterTracker, track_usage, track_api_request_pay, 
     track_token_based_pay, track_instant_pay
@@ -14,13 +16,21 @@ from .decorators import (
 )
 from .langchain_integration import LangChainAgentMeterCallback
 from .models import (
-    EventType, PaymentType, MeterEvent, APIRequestPayEvent, 
+    # New v0.3.1 models
+    MeterType, MeterEvent, MeterEventCreate, UsageAggregation,
+    # Legacy models for backward compatibility
+    EventType, PaymentType, MeterEventLegacy, APIRequestPayEvent, 
     TokenBasedPayEvent, InstantPayEvent, MeterEventResponse, MeterEventsResponse,
     AgentMeterConfig, Project, UserMeter, MeterStats, BillingRecord
 )
-from .exceptions import AgentMeterError, RateLimitError, AgentMeterAPIError, AgentMeterValidationError
+from .exceptions import (
+    AgentMeterError, AuthenticationError, AuthorizationError, NotFoundError,
+    ValidationError, ServerError,
+    # Legacy aliases
+    RateLimitError, AgentMeterAPIError, AgentMeterValidationError
+)
 
-__version__ = "0.2.0"
+__version__ = "0.3.1"
 __author__ = "AgentMeter Team"
 
 # Convenience functions for easy integration
@@ -29,7 +39,7 @@ def create_client(
     project_id: str = None,
     agent_id: str = None,
     user_id: str = "anonymous",
-    base_url: str = "https://api.staging.agentmeter.money"
+    base_url: str = "https://api.agentmeter.money"
 ) -> AgentMeterClient:
     """
     Create a pre-configured AgentMeter client
@@ -110,28 +120,38 @@ def quick_instant_pay(
 
 # Export main classes and functions for easy access
 __all__ = [
-    # Main client
+    # Main clients (v0.3.1)
+    'AgentMeter',
+    'AsyncAgentMeter',
+    
+    # Legacy client (backward compatibility)
     'AgentMeterClient',
     'create_client',
     
-    # Tracking
+    # Tracking (legacy)
     'AgentMeterTracker',
     'track_usage',
     'track_api_request_pay',
     'track_token_based_pay', 
     'track_instant_pay',
     
-    # Decorators
+    # Decorators (legacy)
     'meter_function',
     'meter_agent',
     'meter_api_request_pay',
     'meter_token_based_pay',
     'meter_instant_pay',
     
-    # Models
+    # New v0.3.1 models
+    'MeterType',
+    'MeterEvent',
+    'MeterEventCreate',
+    'UsageAggregation',
+    
+    # Legacy models
     'EventType',
     'PaymentType',
-    'MeterEvent',
+    'MeterEventLegacy',
     'APIRequestPayEvent',
     'TokenBasedPayEvent',
     'InstantPayEvent',
@@ -148,11 +168,16 @@ __all__ = [
     
     # Exceptions
     'AgentMeterError',
+    'AuthenticationError',
+    'AuthorizationError',
+    'NotFoundError',
+    'ValidationError',
+    'ServerError',
     'RateLimitError',
     'AgentMeterAPIError',
     'AgentMeterValidationError',
     
-    # Quick functions
+    # Quick functions (legacy)
     'quick_api_request_pay',
     'quick_token_based_pay',
     'quick_instant_pay'

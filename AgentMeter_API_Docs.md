@@ -15,7 +15,7 @@ Authorization: Bearer YOUR_PROJECT_SECRET_KEY
 ## Base URL
 
 ```
-https://api.staging.agentmeter.money
+https://api.agentmeter.money
 ```
 
 ## API Endpoints

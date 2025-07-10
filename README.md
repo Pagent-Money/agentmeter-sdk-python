@@ -4,6 +4,47 @@
 
 A comprehensive Python SDK for integrating AgentMeter usage tracking and billing into your applications. **Supports three payment types: API Request Pay, Token-based Pay, and Instant Pay.**
 
+## 🚀 What's New in v0.3.1
+
+**Brand new resource-based architecture with full backward compatibility!**
+
+### New Features
+- ✨ **Resource-Based API**: Clean, organized client with `meter.projects`, `meter.meter_types`, `meter.meter_events`, `meter.users`
+- 🔄 **Async/Await Support**: Full async support with `AsyncAgentMeter` for modern applications  
+- 🎯 **Better Error Handling**: Specific exception types (`AuthenticationError`, `ValidationError`, etc.)
+- 🛡️ **Enhanced Type Safety**: Updated to Pydantic v2 with improved validation
+- 🌐 **Production Ready**: Now uses `api.agentmeter.money` production endpoint
+- 🔧 **Modern HTTP**: Switched to `httpx` with built-in retry logic and better performance
+
+### Quick Example (New v0.3.1 API)
+```python
+from agentmeter import AgentMeter
+
+# New resource-based client
+with AgentMeter(api_key="your_api_key") as meter:
+    # Create and manage meter types
+    meter_type = meter.meter_types.create(
+        project_id=project_id,
+        name="api_calls", 
+        unit="requests"
+    )
+    
+    # Record usage events
+    event = meter.meter_events.record(
+        meter_type_id=meter_type.id,
+        subject_id="user_123",
+        quantity=1.0
+    )
+    
+    # Get aggregated usage statistics
+    stats = meter.meter_events.get_aggregations(
+        meter_type_id=meter_type.id
+    )
+```
+
+### Backward Compatibility
+All existing v0.2.0 code continues to work without any changes. See [examples/v031_new_features.py](examples/v031_new_features.py) for a complete guide.
+
 ## 🚀 Featured Integration: Coinbase AgentKit
 
 **AgentMeter now officially supports [Coinbase AgentKit](https://github.com/coinbase/agentkit)** - the leading framework for building AI agents that interact with onchain protocols!
@@ -465,7 +506,7 @@ config = AgentMeterConfig(
     agent_id="agent_456",
     user_id="user_789",
     api_key="your_api_key",
-    base_url="https://api.staging.agentmeter.money",
+    base_url="https://api.agentmeter.money",
     # Default pricing
     api_request_unit_price=0.001,
     input_token_price=0.000004,

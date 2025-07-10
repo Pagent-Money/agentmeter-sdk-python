@@ -217,6 +217,19 @@ class AgentMeterTracker:
             description=description
         )
     
+    # Backward compatibility method aliases
+    def track_api_request_pay(self, user_id: str, **kwargs):
+        """Backward compatibility alias for track_api_request"""
+        return self.track_api_request(user_id, **kwargs)
+    
+    def track_token_based_pay(self, user_id: str, **kwargs):
+        """Backward compatibility alias for track_token_usage"""
+        return self.track_token_usage(user_id, **kwargs)
+    
+    def track_instant_pay(self, user_id: str, **kwargs):
+        """Backward compatibility alias for track_instant_payment"""
+        return self.track_instant_payment(user_id, **kwargs)
+    
     def track_event(
         self,
         event_type: EventType = EventType.API_CALL,

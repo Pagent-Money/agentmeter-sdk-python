@@ -148,7 +148,7 @@ class TestPublishedPackageValidation:
         assert client.api_key == "test_key"
         assert client.project_id == "test_project"
         assert client.agent_id == "test_agent"
-        assert client.base_url == "https://api.staging.agentmeter.money"
+        assert client.base_url == "https://api.agentmeter.money"
     
     def test_convenience_client_creation(self):
         """Test that create_client convenience function works."""

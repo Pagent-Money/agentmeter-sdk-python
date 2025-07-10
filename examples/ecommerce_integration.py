@@ -29,7 +29,7 @@ class EcommerceService:
             api_key=api_key,
             project_id=project_id,
             agent_id=agent_id,
-            base_url="https://api.staging.agentmeter.money"
+            base_url="https://api.agentmeter.money"
         )
         self.project_id = project_id
         self.agent_id = agent_id

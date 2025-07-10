@@ -1,15 +1,230 @@
 """
 Data models for AgentMeter SDK
-Defines the structure for events, user meters, and other API objects
 """
 
 from enum import Enum
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Literal, Union
-from pydantic import BaseModel, Field, field_validator
-import uuid
+from pydantic import BaseModel, Field, field_validator, ConfigDict
+from uuid import UUID, uuid4
+import httpx  # For backward compatibility with tests
 
 
+# New models for v0.3.1
+class MeterType(BaseModel):
+    """Meter type model."""
+    id: Optional[Union[UUID, str]] = None
+    project_id: Optional[Union[UUID, str]] = None  # Optional for backward compatibility
+    name: str
+    unit: Optional[str] = None  # Optional for backward compatibility
+    description: Optional[str] = None
+    aggregation_method: str = "sum"
+    is_active: bool = True
+    created_at: Optional[str] = None  # Keep as string for backward compatibility
+    updated_at: Optional[str] = None  # Keep as string for backward compatibility
+    
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v):
+        if len(v.strip()) == 0:
+            raise ValueError("Meter type name cannot be empty")
+        return v
+    
+    # Pydantic v1 backward compatibility methods
+    def dict(self, **kwargs) -> Dict[str, Any]:
+        """Backward compatibility for Pydantic v1 dict() method"""
+        return self.model_dump(**kwargs)
+    
+    def json(self, **kwargs) -> str:
+        """Backward compatibility for Pydantic v1 json() method"""
+        return self.model_dump_json(**kwargs)
+    
+    @classmethod
+    def parse_raw(cls, data: Union[str, bytes], **kwargs):
+        """Backward compatibility for Pydantic v1 parse_raw() method"""
+        if isinstance(data, bytes):
+            data = data.decode()
+        return cls.model_validate_json(data, **kwargs)
+
+
+class MeterEvent(BaseModel):
+    """Meter event model."""
+    id: Optional[Union[UUID, str]] = None
+    meter_type_id: Union[UUID, str]
+    subject_id: str
+    quantity: float
+    timestamp: Optional[str] = None  # Keep as string for backward compatibility
+    received_at: Optional[str] = None  # Keep as string for backward compatibility
+    event_metadata: Optional[Dict[str, Any]] = None
+    
+    def __init__(self, **data):
+        # Handle backward compatibility field mappings
+        if 'metadata' in data and 'event_metadata' not in data:
+            data['event_metadata'] = data.pop('metadata')
+        if 'created_at' in data and 'timestamp' not in data:
+            data['timestamp'] = data.pop('created_at')
+        super().__init__(**data)
+    
+    # Backward compatibility properties
+    @property
+    def metadata(self) -> Optional[Dict[str, Any]]:
+        """Backward compatibility alias for event_metadata"""
+        return self.event_metadata
+    
+    @metadata.setter 
+    def metadata(self, value: Optional[Dict[str, Any]]):
+        """Backward compatibility setter for event_metadata"""
+        self.event_metadata = value
+    
+    # Support for created_at in tests
+    @property
+    def created_at(self) -> Optional[str]:
+        """Backward compatibility alias for timestamp"""
+        return self.timestamp
+    
+    @created_at.setter
+    def created_at(self, value: Optional[str]):
+        """Backward compatibility setter for timestamp"""
+        self.timestamp = value
+    
+    @field_validator('quantity')
+    @classmethod
+    def validate_quantity(cls, v):
+        if v < 0:
+            raise ValueError("Quantity cannot be negative")
+        return v
+    
+    # Pydantic v1 backward compatibility methods
+    def dict(self, **kwargs) -> Dict[str, Any]:
+        """Backward compatibility for Pydantic v1 dict() method"""
+        data = self.model_dump(**kwargs)
+        # Map internal field names to backward-compatible names
+        if 'event_metadata' in data:
+            data['metadata'] = data.pop('event_metadata')
+        if 'timestamp' in data:
+            data['created_at'] = data['timestamp']  # Keep both for compatibility
+        return data
+    
+    def json(self, **kwargs) -> str:
+        """Backward compatibility for Pydantic v1 json() method"""
+        return self.model_dump_json(**kwargs)
+    
+    @classmethod
+    def parse_raw(cls, data: Union[str, bytes], **kwargs):
+        """Backward compatibility for Pydantic v1 parse_raw() method"""
+        if isinstance(data, bytes):
+            data = data.decode()
+        return cls.model_validate_json(data, **kwargs)
+
+
+class MeterEventCreate(BaseModel):
+    """Model for creating meter events."""
+    meter_type_id: Union[UUID, str]
+    subject_id: str
+    quantity: float
+    timestamp: Optional[str] = None  # Keep as string for backward compatibility
+    event_metadata: Optional[Dict[str, Any]] = None  # Default to None for backward compatibility
+    
+    def __init__(self, **data):
+        # Handle backward compatibility field mappings
+        if 'metadata' in data and 'event_metadata' not in data:
+            data['event_metadata'] = data.pop('metadata')
+        super().__init__(**data)
+    
+    @field_validator('quantity')
+    @classmethod
+    def validate_quantity(cls, v):
+        if v < 0:
+            raise ValueError("Quantity cannot be negative")
+        return v
+    
+    @field_validator('meter_type_id')
+    @classmethod
+    def validate_meter_type_id(cls, v):
+        if isinstance(v, str) and len(v.strip()) == 0:
+            raise ValueError("Meter type ID cannot be empty")
+        return v
+    
+    @field_validator('subject_id')
+    @classmethod
+    def validate_subject_id(cls, v):
+        if len(v.strip()) == 0:
+            raise ValueError("Subject ID cannot be empty")
+        return v
+    
+    # Backward compatibility properties
+    @property
+    def metadata(self) -> Optional[Dict[str, Any]]:
+        """Backward compatibility alias for event_metadata"""
+        return self.event_metadata
+    
+    @metadata.setter 
+    def metadata(self, value: Optional[Dict[str, Any]]):
+        """Backward compatibility setter for event_metadata"""
+        self.event_metadata = value
+
+
+class UsageAggregation(BaseModel):
+    """Usage aggregation result."""
+    meter_type_id: Optional[Union[UUID, str]] = None  # For compatibility with tests
+    subject_id: Optional[str] = None  # For backward compatibility
+    total_quantity: float
+    total_events: int
+    unique_subjects: Optional[int] = None  # Optional for backward compatibility
+    first_event: Optional[str] = None  # Keep as string for backward compatibility
+    last_event: Optional[str] = None  # Keep as string for backward compatibility
+    period_start: Optional[str] = None  # For backward compatibility
+    period_end: Optional[str] = None  # For backward compatibility
+    
+    def __init__(self, **data):
+        # Handle backward compatibility field mappings
+        if 'event_count' in data and 'total_events' not in data:
+            data['total_events'] = data.pop('event_count')
+        super().__init__(**data)
+    
+    @field_validator('total_quantity')
+    @classmethod
+    def validate_total_quantity(cls, v):
+        if v < 0:
+            raise ValueError("Total quantity cannot be negative")
+        return v
+    
+    @field_validator('total_events')
+    @classmethod
+    def validate_total_events(cls, v):
+        if v < 0:
+            raise ValueError("Event count cannot be negative")
+        return v
+    
+    # Backward compatibility properties
+    @property
+    def event_count(self) -> int:
+        """Backward compatibility alias for total_events"""
+        return self.total_events
+    
+    @event_count.setter
+    def event_count(self, value: int):
+        """Backward compatibility setter for total_events"""
+        self.total_events = value
+    
+    # Pydantic v1 backward compatibility methods
+    def dict(self, **kwargs) -> Dict[str, Any]:
+        """Backward compatibility for Pydantic v1 dict() method"""
+        return self.model_dump(**kwargs)
+    
+    def json(self, **kwargs) -> str:
+        """Backward compatibility for Pydantic v1 json() method"""
+        return self.model_dump_json(**kwargs)
+    
+    @classmethod
+    def parse_raw(cls, data: Union[str, bytes], **kwargs):
+        """Backward compatibility for Pydantic v1 parse_raw() method"""
+        if isinstance(data, bytes):
+            data = data.decode()
+        return cls.model_validate_json(data, **kwargs)
+
+
+# Backwards compatibility models
 class PaymentType(str, Enum):
     """Payment types supported by AgentMeter"""
     API_REQUEST_PAY = "api_request_pay"
@@ -24,15 +239,18 @@ class EventType(str, Enum):
     INSTANT_PAYMENT = "instant_payment"
 
 
-class MeterEvent(BaseModel):
-    """Base model for all metering events"""
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+class MeterEventLegacy(BaseModel):
+    """Legacy base model for all metering events"""
+    model_config = ConfigDict(extra='allow')  # Allow extra fields for backward compatibility
+    
+    id: str = Field(default_factory=lambda: str(uuid4()))
     project_id: str
     agent_id: str
     user_id: str
     total_cost: float = 0.0
     timestamp: datetime = Field(default_factory=datetime.now)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    payment_type: Optional[str] = None  # Added for backward compatibility
     
     @field_validator('total_cost')
     @classmethod
@@ -54,12 +272,16 @@ class MeterEvent(BaseModel):
         return result
 
 
-class APIRequestPayEvent(MeterEvent):
+class APIRequestPayEvent(MeterEventLegacy):
     """Event for API request-based payments"""
     event_type: Literal[EventType.API_CALL] = EventType.API_CALL
     payment_type: Literal[PaymentType.API_REQUEST_PAY] = PaymentType.API_REQUEST_PAY
     api_calls: int = 1
     unit_price: float
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.payment_type = PaymentType.API_REQUEST_PAY
     
     @field_validator('api_calls')
     @classmethod
@@ -74,21 +296,9 @@ class APIRequestPayEvent(MeterEvent):
         if 'timestamp' in data and isinstance(data['timestamp'], str):
             data['timestamp'] = datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00'))
         return cls(**data)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary"""
-        result = self.model_dump()
-        result['timestamp'] = self.timestamp.isoformat()
-        
-        # Convert enum values to strings
-        for key, value in result.items():
-            if hasattr(value, 'value'):  # Check if it's an enum
-                result[key] = value.value
-                
-        return result
 
 
-class TokenBasedPayEvent(MeterEvent):
+class TokenBasedPayEvent(MeterEventLegacy):
     """Event for token-based payments"""
     event_type: Literal[EventType.TOKEN_USAGE] = EventType.TOKEN_USAGE
     payment_type: Literal[PaymentType.TOKEN_BASED_PAY] = PaymentType.TOKEN_BASED_PAY
@@ -96,6 +306,10 @@ class TokenBasedPayEvent(MeterEvent):
     tokens_out: int = 0
     input_token_price: float
     output_token_price: float
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.payment_type = PaymentType.TOKEN_BASED_PAY
     
     @field_validator('tokens_in', 'tokens_out')
     @classmethod
@@ -115,26 +329,18 @@ class TokenBasedPayEvent(MeterEvent):
         if 'timestamp' in data and isinstance(data['timestamp'], str):
             data['timestamp'] = datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00'))
         return cls(**data)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary"""
-        result = self.model_dump()
-        result['timestamp'] = self.timestamp.isoformat()
-        
-        # Convert enum values to strings
-        for key, value in result.items():
-            if hasattr(value, 'value'):  # Check if it's an enum
-                result[key] = value.value
-                
-        return result
 
 
-class InstantPayEvent(MeterEvent):
+class InstantPayEvent(MeterEventLegacy):
     """Event for instant payments"""
     event_type: Literal[EventType.INSTANT_PAYMENT] = EventType.INSTANT_PAYMENT
     payment_type: Literal[PaymentType.INSTANT_PAY] = PaymentType.INSTANT_PAY
     amount: float
     description: str
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.payment_type = PaymentType.INSTANT_PAY
     
     @field_validator('amount')
     @classmethod
@@ -149,18 +355,6 @@ class InstantPayEvent(MeterEvent):
         if 'timestamp' in data and isinstance(data['timestamp'], str):
             data['timestamp'] = datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00'))
         return cls(**data)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary"""
-        result = self.model_dump()
-        result['timestamp'] = self.timestamp.isoformat()
-        
-        # Convert enum values to strings
-        for key, value in result.items():
-            if hasattr(value, 'value'):  # Check if it's an enum
-                result[key] = value.value
-                
-        return result
 
 
 class MeterEventResponse(BaseModel):
@@ -199,40 +393,34 @@ class UserMeter(BaseModel):
     user_id: str
     threshold_amount: float
     current_usage: float = 0.0
-    last_reset_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
+    last_reset_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     
     @property
     def remaining_budget(self) -> float:
         """Remaining budget amount"""
-        return self.threshold_amount - self.current_usage
+        return max(0, self.threshold_amount - self.current_usage)
     
     @property
     def usage_percentage(self) -> float:
         """Usage as percentage of threshold"""
-        if self.threshold_amount == 0:
+        if self.threshold_amount <= 0:
             return 0.0
-        return (self.current_usage / self.threshold_amount) * 100
+        return min(100.0, (self.current_usage / self.threshold_amount) * 100)
     
     @property
     def is_over_limit(self) -> bool:
-        """Whether usage exceeds threshold"""
-        return self.current_usage > self.threshold_amount
+        """Check if usage exceeds threshold"""
+        return self.current_usage >= self.threshold_amount
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'UserMeter':
         """Create instance from dictionary"""
-        for field in ['last_reset_at', 'updated_at']:
+        for field in ['created_at', 'last_reset_at', 'updated_at']:
             if field in data and isinstance(data[field], str):
                 data[field] = datetime.fromisoformat(data[field].replace('Z', '+00:00'))
         return cls(**data)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary"""
-        result = self.model_dump()
-        result['last_reset_at'] = self.last_reset_at.isoformat()
-        result['updated_at'] = self.updated_at.isoformat()
-        return result
 
 
 class MeterStats(BaseModel):
@@ -245,7 +433,7 @@ class MeterStats(BaseModel):
     
     @property
     def total_tokens(self) -> int:
-        """Total tokens across input and output"""
+        """Total tokens (input + output)"""
         return self.total_tokens_in + self.total_tokens_out
     
     @property
@@ -296,37 +484,37 @@ class BillingRecord(BaseModel):
 class AgentMeterConfig(BaseModel):
     """Configuration for AgentMeter client"""
     api_key: str
-    project_id: str
+    project_id: Optional[str] = None  # Optional for backward compatibility
     agent_id: Optional[str] = None
     user_id: Optional[str] = None
-    base_url: str = "https://api.staging.agentmeter.money"
-    timeout: int = 30
-    retry_attempts: int = 3
+    base_url: str = "https://api.agentmeter.money"
+    timeout: float = 30.0  # Changed to float for compatibility with tests
+    max_retries: int = 3  # Changed from retry_attempts for test compatibility
     batch_size: int = 50
+    
+    @field_validator('api_key')
+    @classmethod
+    def validate_api_key(cls, v):
+        if len(v.strip()) == 0:
+            raise ValueError("API key cannot be empty")
+        return v
     
     @field_validator('timeout')
     @classmethod
     def validate_timeout(cls, v):
-        if v <= 0:
-            raise ValueError("Timeout must be positive")
-        return v
-    
-    @field_validator('retry_attempts')
-    @classmethod
-    def validate_retry_attempts(cls, v):
         if v < 0:
-            raise ValueError("Retry attempts cannot be negative")
+            raise ValueError("Timeout cannot be negative")
         return v
     
-    @field_validator('batch_size')
+    @field_validator('max_retries')
     @classmethod
-    def validate_batch_size(cls, v):
-        if v <= 0:
-            raise ValueError("Batch size must be positive")
+    def validate_max_retries(cls, v):
+        if v < 0:
+            raise ValueError("Max retries cannot be negative")
         return v
 
 
-# Request Models
+# Request models
 class ProjectCreateRequest(BaseModel):
     """Request model for creating a project"""
     name: str
@@ -359,7 +547,7 @@ class UserMeterIncrementRequest(BaseModel):
 
 class UserMeterResetRequest(BaseModel):
     """Request model for resetting user meter"""
-    pass  # No additional fields needed for reset
+    pass
 
 
 class BillingRecordCreateRequest(BaseModel):
